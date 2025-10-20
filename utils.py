@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import Counter
+import torch
 
 import config
 
@@ -207,7 +208,6 @@ def estimate_training_time():
 def main():
     """Run all analysis"""
     try:
-        import torch
         analyze_classification_data()
         analyze_image_properties()
         visualize_sample_images()
@@ -224,4 +224,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

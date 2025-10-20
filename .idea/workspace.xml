@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +70,23 @@
       <option name="project" value="LOCAL" />
       <updated>1760958884243</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System">
+      <option name="closed" value="true" />
+      <created>1760960891955</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1760960891955</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System">
+      <option name="closed" value="true" />
+      <created>1760961096894</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1760961096894</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
