@@ -31,7 +31,7 @@ for dir_path in [OUTPUT_DIR, MODEL_DIR, LOG_DIR, RESULT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
 # Model hyperparameters - Optimized for memory efficiency
-IMG_SIZE = 256  # Reduced from 512 to save memory
+IMG_SIZE = 384  # Reduced from 512 to save memory
 BATCH_SIZE = 4  # Small batch size to avoid OOM
 NUM_WORKERS = 2  # Reduced for stability
 NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
