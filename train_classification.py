@@ -6,7 +6,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 from tqdm import tqdm
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
@@ -34,7 +34,9 @@ class ClassificationTrainer:
         self.model = model.to(device)
         self.device = device
         self.use_amp = use_amp
-        self.scaler = GradScaler() if use_amp else None
+        # Fix deprecated GradScaler - specify device type
+        device_type = 'cuda' if device.type == 'cuda' else 'cpu'
+        self.scaler = GradScaler(device_type) if use_amp and device.type == 'cuda' else None
 
         # Loss function - Use advanced strategies
         if config.USE_CLASS_WEIGHTS:
@@ -67,6 +69,9 @@ class ClassificationTrainer:
         self.best_val_acc = 0.0
         self.patience_counter = 0
 
+        # Store device type for autocast
+        self.device_type = device_type
+
     def train_epoch(self, train_loader, epoch):
         """Train for one epoch with MixUp augmentation"""
         self.model.train()
@@ -88,8 +93,9 @@ class ClassificationTrainer:
                 use_mixup = False
 
             # Forward pass with mixed precision
-            if self.use_amp:
-                with autocast():
+            if self.use_amp and self.device_type == 'cuda':
+                # Fix deprecated autocast - use device_type parameter
+                with autocast(device_type='cuda'):
                     outputs = self.model(images)
                     if use_mixup:
                         loss = mixup_criterion(self.criterion, outputs, labels_a, labels_b, lam)
@@ -111,6 +117,7 @@ class ClassificationTrainer:
                     self.scaler.update()
                     self.optimizer.zero_grad()
             else:
+                # CPU mode - no mixed precision
                 outputs = self.model(images)
                 if use_mixup:
                     loss = mixup_criterion(self.criterion, outputs, labels_a, labels_b, lam)
@@ -162,8 +169,9 @@ class ClassificationTrainer:
                 images = images.to(self.device)
                 labels = labels.to(self.device)
 
-                if self.use_amp:
-                    with autocast():
+                if self.use_amp and self.device_type == 'cuda':
+                    # Fix deprecated autocast
+                    with autocast(device_type='cuda'):
                         outputs = self.model(images)
                         loss = self.criterion(outputs, labels)
                 else:
@@ -188,7 +196,7 @@ class ClassificationTrainer:
         """Complete training loop"""
         print(f"Starting training for {num_epochs} epochs...")
         print(f"Device: {self.device}")
-        print(f"Mixed Precision: {self.use_amp}")
+        print(f"Mixed Precision: {self.use_amp and self.device_type == 'cuda'}")
 
         # Initialize scheduler
         if self.use_cosine_schedule:
@@ -370,9 +378,6 @@ def train_classification_model():
 
     # Train
     best_acc = trainer.train(train_loader, val_loader, config.NUM_EPOCHS)
-
-    # Plot metrics
-    trainer.plot_metrics()
 
     return best_acc
 
