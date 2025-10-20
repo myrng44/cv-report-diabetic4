@@ -30,18 +30,18 @@ RESULT_DIR = os.path.join(OUTPUT_DIR, 'results')
 for dir_path in [OUTPUT_DIR, MODEL_DIR, LOG_DIR, RESULT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
-# Model hyperparameters - Optimized for memory efficiency
-IMG_SIZE = 384  # Reduced from 512 to save memory
-BATCH_SIZE = 4  # Small batch size to avoid OOM
+# Model hyperparameters - Optimized for better performance
+IMG_SIZE = 384  # Increased from 256 for better feature extraction
+BATCH_SIZE = 4  # Keep at 4 for CPU, can increase to 8-16 with GPU
 NUM_WORKERS = 2  # Reduced for stability
 NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
 SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
 # Training parameters
-LEARNING_RATE = 1e-4
-NUM_EPOCHS = 30
-EARLY_STOPPING_PATIENCE = 10
-WEIGHT_DECAY = 1e-5
+LEARNING_RATE = 5e-5  # Reduced for more stable training
+NUM_EPOCHS = 50  # Increased for better convergence
+EARLY_STOPPING_PATIENCE = 15  # Increased patience
+WEIGHT_DECAY = 1e-4  # Increased for better regularization
 
 # SANGO algorithm parameters
 POPULATION_SIZE = 20  # Reduced for faster computation
@@ -88,3 +88,13 @@ GRADIENT_ACCUMULATION_STEPS = 2
 # Random seed for reproducibility
 SEED = 42
 
+# Advanced training strategies (from advanced_strategies.py)
+USE_CLASS_WEIGHTS = True  # Important for imbalanced dataset!
+USE_MIXUP = True  # Very effective for small datasets
+MIXUP_ALPHA = 0.2
+USE_LABEL_SMOOTHING = True
+LABEL_SMOOTHING = 0.1
+GRADIENT_CLIP_NORM = 1.0
+USE_COSINE_SCHEDULE = True  # Better than ReduceLROnPlateau
+WARMUP_EPOCHS = 5
+USE_TTA = False  # Disable for training, enable for inference
