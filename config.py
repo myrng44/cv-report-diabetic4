@@ -39,7 +39,7 @@ SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
 # Training parameters
 LEARNING_RATE = 1e-4
-NUM_EPOCHS = 50
+NUM_EPOCHS = 30
 EARLY_STOPPING_PATIENCE = 10
 WEIGHT_DECAY = 1e-5
 
