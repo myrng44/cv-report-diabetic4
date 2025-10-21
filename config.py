@@ -38,10 +38,10 @@ NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
 SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
 # Training parameters
-LEARNING_RATE = 5e-5  # Reduced for more stable training
-NUM_EPOCHS = 50  # Increased for better convergence
-EARLY_STOPPING_PATIENCE = 15  # Increased patience
-WEIGHT_DECAY = 1e-4  # Increased for better regularization
+LEARNING_RATE = 3e-5  # Reduced from 5e-5 for more stable training
+NUM_EPOCHS = 60  # Increased from 50
+EARLY_STOPPING_PATIENCE = 20  # Increased from 15
+WEIGHT_DECAY = 2e-4  # Increased from 1e-4 for better regularization
 
 # SANGO algorithm parameters
 POPULATION_SIZE = 20  # Reduced for faster computation
@@ -88,13 +88,13 @@ GRADIENT_ACCUMULATION_STEPS = 2
 # Random seed for reproducibility
 SEED = 42
 
-# Advanced training strategies (from advanced_strategies.py)
-USE_CLASS_WEIGHTS = True  # Important for imbalanced dataset!
-USE_MIXUP = True  # Very effective for small datasets
-MIXUP_ALPHA = 0.2
-USE_LABEL_SMOOTHING = True
+# Advanced training strategies (Phase 1 - Quick Win!)
+USE_CLASS_WEIGHTS = False  # Keep disabled for stability
+USE_MIXUP = True  # Enable with gentle mixing
+MIXUP_ALPHA = 0.1  # Reduced from 0.2 for gentler augmentation
+USE_LABEL_SMOOTHING = True  # Enable to reduce overfitting
 LABEL_SMOOTHING = 0.1
 GRADIENT_CLIP_NORM = 1.0
-USE_COSINE_SCHEDULE = True  # Better than ReduceLROnPlateau
+USE_COSINE_SCHEDULE = False  # Keep ReduceLROnPlateau for stability
 WARMUP_EPOCHS = 5
 USE_TTA = False  # Disable for training, enable for inference
