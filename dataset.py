@@ -99,6 +99,9 @@ class DRSegmentationDataset(Dataset):
         # Normalize mask to [0, 1]
         mask = mask.float() / 255.0
 
+        # Permute mask from [H, W, C] to [C, H, W] to match PyTorch convention
+        mask = mask.permute(2, 0, 1)
+
         return image, mask
 
 
@@ -232,4 +235,3 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
     )
 
     return train_loader, val_loader
-

@@ -6,7 +6,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,7 +40,10 @@ class SegmentationTrainer:
         self.model = model.to(device)
         self.device = device
         self.use_amp = use_amp
-        self.scaler = GradScaler() if use_amp else None
+        # Fix deprecated GradScaler - specify device type and only enable on CUDA
+        device_type = 'cuda' if device.type == 'cuda' else 'cpu'
+        self.scaler = GradScaler(device_type) if use_amp and device.type == 'cuda' else None
+        self.device_type = device_type
 
         # Loss function
         self.criterion = CombinedLoss(bce_weight=0.5, dice_weight=0.5)
@@ -79,9 +82,9 @@ class SegmentationTrainer:
             images = images.to(self.device)
             masks = masks.to(self.device)
 
-            # Forward pass with mixed precision
-            if self.use_amp:
-                with autocast():
+            # Forward pass with mixed precision (only on CUDA)
+            if self.use_amp and self.device_type == 'cuda':
+                with autocast(device_type='cuda'):
                     outputs = self.model(images)
                     loss = self.criterion(outputs, masks)
 
@@ -95,6 +98,7 @@ class SegmentationTrainer:
                     self.scaler.update()
                     self.optimizer.zero_grad()
             else:
+                # CPU mode - no mixed precision
                 outputs = self.model(images)
                 loss = self.criterion(outputs, masks)
 
@@ -120,8 +124,8 @@ class SegmentationTrainer:
                 images = images.to(self.device)
                 masks = masks.to(self.device)
 
-                if self.use_amp:
-                    with autocast():
+                if self.use_amp and self.device_type == 'cuda':
+                    with autocast(device_type='cuda'):
                         outputs = self.model(images)
                         loss = self.criterion(outputs, masks)
                 else:
@@ -289,4 +293,3 @@ def train_segmentation_model():
 
 if __name__ == '__main__':
     train_segmentation_model()
-
