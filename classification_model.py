@@ -39,8 +39,12 @@ class DRClassificationModel(nn.Module):
                  gru_hidden_size: int = 128, gru_num_layers: int = 2):
         super(DRClassificationModel, self).__init__()
 
-        # DenseNet backbone (memory efficient)
-        densenet = models.densenet121(pretrained=pretrained)
+        # DenseNet backbone (memory efficient) - Fixed deprecated pretrained parameter
+        if pretrained:
+            from torchvision.models import DenseNet121_Weights
+            densenet = models.densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
+        else:
+            densenet = models.densenet121(weights=None)
 
         # Remove classifier
         self.features = nn.Sequential(*list(densenet.children())[:-1])
@@ -119,8 +123,9 @@ class MultiTaskModel(nn.Module):
     def __init__(self, num_classes: int = 5, seg_classes: int = 3):
         super(MultiTaskModel, self).__init__()
 
-        # Shared encoder (DenseNet)
-        densenet = models.densenet121(pretrained=True)
+        # Shared encoder (DenseNet) - Fixed deprecated pretrained parameter
+        from torchvision.models import DenseNet121_Weights
+        densenet = models.densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
         self.encoder = nn.Sequential(*list(densenet.children())[:-1])
 
         # Classification head
@@ -184,4 +189,3 @@ class FocalLoss(nn.Module):
         pt = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
         return focal_loss.mean()
-

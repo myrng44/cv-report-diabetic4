@@ -195,12 +195,16 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         test_dataset = torch.utils.data.Subset(train_dataset, val_indices)
         train_dataset = train_dataset_split
 
+    # Detect if CUDA is available for pin_memory
+    import torch
+    use_pin_memory = torch.cuda.is_available()
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
     )
 
     test_loader = DataLoader(
@@ -208,7 +212,7 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
     )
 
     return train_loader, test_loader
@@ -232,12 +236,15 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
     train_dataset_split = torch.utils.data.Subset(train_dataset, train_indices)
     val_dataset = torch.utils.data.Subset(train_dataset, val_indices)
 
+    # Detect if CUDA is available for pin_memory
+    use_pin_memory = torch.cuda.is_available()
+
     train_loader = DataLoader(
         train_dataset_split,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
     )
 
     val_loader = DataLoader(
@@ -245,7 +252,7 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
     )
 
     return train_loader, val_loader
