@@ -53,11 +53,20 @@ class DRSegmentationDataset(Dataset):
     """Dataset for DR lesion segmentation"""
 
     def __init__(self, image_dir: str, mask_dir: str, transform=None,
-                 lesion_types: list = ['1. Microaneurysms', '2. Haemorrhages', '3. Hard Exudates']):
+                 lesion_types: list = None):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.transform = transform
-        self.lesion_types = lesion_types
+
+        # Define lesion types with folder names and file suffixes
+        if lesion_types is None:
+            self.lesion_types = [
+                ('1. Microaneurysms_', 'MA'),
+                ('2. Haemorrhages_', 'HE'),
+                ('3. Hard Exudates_', 'EX')
+            ]
+        else:
+            self.lesion_types = lesion_types
 
         # Get all image files
         self.image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.jpg')])
@@ -76,8 +85,8 @@ class DRSegmentationDataset(Dataset):
         base_name = img_name.replace('.jpg', '')
         masks = []
 
-        for lesion_type in self.lesion_types:
-            mask_path = os.path.join(self.mask_dir, lesion_type, f"{base_name}_{lesion_type.split('.')[1].strip()}.tif")
+        for folder_name, suffix in self.lesion_types:
+            mask_path = os.path.join(self.mask_dir, folder_name, f"{base_name}_{suffix}.tif")
 
             if os.path.exists(mask_path):
                 mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
@@ -96,11 +105,16 @@ class DRSegmentationDataset(Dataset):
             image = augmented['image']
             mask = augmented['mask']
 
-        # Normalize mask to [0, 1]
-        mask = mask.float() / 255.0
+            # Normalize mask to [0, 1]
+            mask = mask.float() / 255.0
 
-        # Permute mask from [H, W, C] to [C, H, W] to match PyTorch convention
-        mask = mask.permute(2, 0, 1)
+            # Permute mask from [H, W, C] to [C, H, W] to match PyTorch convention
+            mask = mask.permute(2, 0, 1)
+        else:
+            # No transform: convert to tensor manually
+            mask = torch.from_numpy(mask).float() / 255.0
+            mask = mask.permute(2, 0, 1)
+            image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
 
         return image, mask
 
