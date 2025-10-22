@@ -31,14 +31,14 @@ for dir_path in [OUTPUT_DIR, MODEL_DIR, LOG_DIR, RESULT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
 # Model hyperparameters - Optimized for better performance
-IMG_SIZE = 384  # Increased from 256 for better feature extraction
-BATCH_SIZE = 4  # Keep at 4 for CPU, can increase to 8-16 with GPU
+IMG_SIZE = 512  # Increased from 384 - IMPORTANT for tiny lesions!
+BATCH_SIZE = 2  # Reduced to 2 due to larger image size
 NUM_WORKERS = 2  # Reduced for stability
 NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
 SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
 # Training parameters
-LEARNING_RATE = 3e-5  # Reduced from 5e-5 for more stable training
+LEARNING_RATE = 1e-4  # Increased from 3e-5 for segmentation
 NUM_EPOCHS = 60  # Increased from 50
 EARLY_STOPPING_PATIENCE = 20  # Increased from 15
 WEIGHT_DECAY = 2e-4  # Increased from 1e-4 for better regularization

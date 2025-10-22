@@ -17,20 +17,32 @@ from segmentation_model import create_segmentation_model, CombinedLoss
 
 
 def calculate_iou(pred, target, threshold=0.5):
-    """Calculate IoU (Intersection over Union)"""
+    """Calculate IoU (Intersection over Union) - per channel average"""
     pred = (pred > threshold).float()
-    intersection = (pred * target).sum()
-    union = pred.sum() + target.sum() - intersection
+    target = target.float()
+
+    # Calculate per channel to handle multi-class properly
+    intersection = (pred * target).sum(dim=(1, 2))
+    union = pred.sum(dim=(1, 2)) + target.sum(dim=(1, 2)) - intersection
+
+    # Avoid division by zero - only calculate IoU for channels with positive samples
     iou = (intersection + 1e-6) / (union + 1e-6)
-    return iou.item()
+
+    # Return mean across all channels
+    return iou.mean().item()
 
 
 def calculate_dice(pred, target, threshold=0.5):
-    """Calculate Dice Similarity Coefficient"""
+    """Calculate Dice Similarity Coefficient - per channel average"""
     pred = (pred > threshold).float()
-    intersection = (pred * target).sum()
-    dice = (2.0 * intersection + 1e-6) / (pred.sum() + target.sum() + 1e-6)
-    return dice.item()
+    target = target.float()
+
+    # Calculate per channel
+    intersection = (pred * target).sum(dim=(1, 2))
+    dice = (2.0 * intersection + 1e-6) / (pred.sum(dim=(1, 2)) + target.sum(dim=(1, 2)) + 1e-6)
+
+    # Return mean across all channels
+    return dice.mean().item()
 
 
 class SegmentationTrainer:
@@ -45,14 +57,15 @@ class SegmentationTrainer:
         self.scaler = GradScaler(device_type) if use_amp and device.type == 'cuda' else None
         self.device_type = device_type
 
-        # Loss function
-        self.criterion = CombinedLoss(bce_weight=0.5, dice_weight=0.5)
+        # Loss function - Optimized for tiny lesions with class imbalance
+        self.criterion = CombinedLoss(focal_weight=1.0, tversky_weight=1.0, dice_weight=0.5)
 
-        # Optimizer
+        # Optimizer - Higher LR for segmentation (1e-4 better than 3e-5)
         self.optimizer = optim.AdamW(
             self.model.parameters(),
-            lr=config.LEARNING_RATE,
-            weight_decay=config.WEIGHT_DECAY
+            lr=1e-4,  # Increased from 3e-5
+            weight_decay=config.WEIGHT_DECAY,
+            betas=(0.9, 0.999)
         )
 
         # Learning rate scheduler

@@ -104,10 +104,10 @@ class DRSegmentationDataset(Dataset):
             augmented = self.transform(image=image, mask=mask)
             image = augmented['image']
             mask = augmented['mask']
-
+            
             # Normalize mask to [0, 1]
             mask = mask.float() / 255.0
-
+            
             # Permute mask from [H, W, C] to [C, H, W] to match PyTorch convention
             mask = mask.permute(2, 0, 1)
         else:

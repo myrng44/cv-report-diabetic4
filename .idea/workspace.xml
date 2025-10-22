@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Refine training parameters for improved stability and performance">
+    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Add dataset and test script for DR classification and segmentation">
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/segmentation_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/segmentation_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_segmentation.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_segmentation.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,7 +139,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761009425717</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Add dataset and test script for DR classification and segmentation">
+      <option name="closed" value="true" />
+      <created>1761095062496</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1761095062496</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -144,6 +156,7 @@
     <MESSAGE value="Enhance training configuration with advanced strategies for improved performance" />
     <MESSAGE value="Enhance training configuration and fix deprecated mixed precision handling" />
     <MESSAGE value="Refine training parameters for improved stability and performance" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refine training parameters for improved stability and performance" />
+    <MESSAGE value="Add dataset and test script for DR classification and segmentation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add dataset and test script for DR classification and segmentation" />
   </component>
 </project>
