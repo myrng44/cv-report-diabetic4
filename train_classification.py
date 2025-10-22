@@ -102,17 +102,19 @@ class ClassificationTrainer:
                     else:
                         loss = self.criterion(outputs, labels)
 
+                # Scale loss for gradient accumulation
+                loss = loss / config.GRADIENT_ACCUMULATION_STEPS
+
                 # Backward pass
-                self.optimizer.zero_grad()
                 self.scaler.scale(loss).backward()
 
-                # Gradient clipping
-                if config.GRADIENT_CLIP_NORM > 0:
-                    self.scaler.unscale_(self.optimizer)
-                    clip_gradients(self.model, max_norm=config.GRADIENT_CLIP_NORM)
-
-                # Gradient accumulation
+                # Gradient accumulation - only step every N batches
                 if (batch_idx + 1) % config.GRADIENT_ACCUMULATION_STEPS == 0:
+                    # Gradient clipping
+                    if config.GRADIENT_CLIP_NORM > 0:
+                        self.scaler.unscale_(self.optimizer)
+                        clip_gradients(self.model, max_norm=config.GRADIENT_CLIP_NORM)
+
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                     self.optimizer.zero_grad()

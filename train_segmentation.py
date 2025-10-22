@@ -101,8 +101,13 @@ class SegmentationTrainer:
                     outputs = self.model(images)
                     loss = self.criterion(outputs, masks)
 
+                # Store original loss for tracking
+                loss_value = loss.item()
+
+                # Scale loss for gradient accumulation
+                loss = loss / config.GRADIENT_ACCUMULATION_STEPS
+
                 # Backward pass
-                self.optimizer.zero_grad()
                 self.scaler.scale(loss).backward()
 
                 # Gradient accumulation
@@ -115,12 +120,14 @@ class SegmentationTrainer:
                 outputs = self.model(images)
                 loss = self.criterion(outputs, masks)
 
+                loss_value = loss.item()
+
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-            running_loss += loss.item()
-            pbar.set_postfix({'loss': loss.item()})
+            running_loss += loss_value
+            pbar.set_postfix({'loss': loss_value})
 
         epoch_loss = running_loss / len(train_loader)
         return epoch_loss
