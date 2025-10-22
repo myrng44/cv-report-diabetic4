@@ -24,6 +24,8 @@ def main():
                        help='Number of training epochs (overrides config)')
     parser.add_argument('--batch_size', type=int, default=None,
                        help='Batch size (overrides config)')
+    parser.add_argument('--img_size', type=int, default=None,
+                       help='Image size (overrides config)')
 
     args = parser.parse_args()
 
@@ -32,6 +34,8 @@ def main():
         config.NUM_EPOCHS = args.epochs
     if args.batch_size:
         config.BATCH_SIZE = args.batch_size
+    if args.img_size:
+        config.IMG_SIZE = args.img_size
 
     # Set random seeds
     torch.manual_seed(config.SEED)
@@ -113,4 +117,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
