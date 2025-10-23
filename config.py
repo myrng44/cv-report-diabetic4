@@ -31,16 +31,16 @@ for dir_path in [OUTPUT_DIR, MODEL_DIR, LOG_DIR, RESULT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
 # Model hyperparameters - Optimized for better performance
-IMG_SIZE = 512  # Increased from 384 - IMPORTANT for tiny lesions!
-BATCH_SIZE = 2  # Reduced to 2 due to larger image size
+IMG_SIZE = 512  # Optimal balance between detail and memory
+BATCH_SIZE = 8  # Tăng từ 2 lên 4 với size nhỏ hơn
 NUM_WORKERS = 2  # Reduced for stability
 NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
 SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
 # Training parameters
-LEARNING_RATE = 1e-4  # Increased from 3e-5 for segmentation
-NUM_EPOCHS = 60  # Increased from 50
-EARLY_STOPPING_PATIENCE = 20  # Increased from 15
+LEARNING_RATE = 3e-5  # Giảm từ 1e-4 cho segmentation stability
+NUM_EPOCHS = 120  # Tăng từ 60 để train đủ
+EARLY_STOPPING_PATIENCE = 30  # Tăng từ 30 để không stop quá sớm
 WEIGHT_DECAY = 2e-4  # Increased from 1e-4 for better regularization
 
 # SANGO algorithm parameters
@@ -98,3 +98,7 @@ GRADIENT_CLIP_NORM = 1.0
 USE_COSINE_SCHEDULE = False  # Keep ReduceLROnPlateau for stability
 WARMUP_EPOCHS = 5
 USE_TTA = False  # Disable for training, enable for inference
+
+# OneCycleLR parameters (for segmentation)
+MAX_LR = 1e-4  # Maximum learning rate for OneCycleLR
+PCT_START = 0.3  # Percentage of training for warm-up

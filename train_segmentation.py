@@ -58,22 +58,24 @@ class SegmentationTrainer:
         self.device_type = device_type
 
         # Loss function - Optimized for tiny lesions with class imbalance
-        self.criterion = CombinedLoss(focal_weight=1.0, tversky_weight=1.0, dice_weight=0.5)
+        self.criterion = CombinedLoss(
+            focal_weight=4.0,      # Tăng từ 3.0 → 5.0 (mạnh hơn nữa)
+            tversky_weight=3.0,    # Giữ 3.0
+            dice_weight=1.0
+        )
 
-        # Optimizer - Higher LR for segmentation (1e-4 better than 3e-5)
+        # Optimizer - Higher initial LR (will be controlled by OneCycleLR)
         self.optimizer = optim.AdamW(
             self.model.parameters(),
-            lr=1e-4,  # Increased from 3e-5
+            lr=1e-4,  # Initial LR (OneCycleLR sẽ điều chỉnh)
             weight_decay=config.WEIGHT_DECAY,
             betas=(0.9, 0.999)
         )
 
-        # Learning rate scheduler
-        self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer,
-            T_max=config.NUM_EPOCHS,
-            eta_min=1e-6
-        )
+        # Learning rate scheduler - CHANGED to OneCycleLR!
+        # OneCycleLR prevents getting stuck in local minimum
+        self.scheduler = None  # Will be initialized in train()
+        self.use_onecycle = True
 
         # Metrics tracking
         self.train_losses = []
@@ -129,6 +131,10 @@ class SegmentationTrainer:
             running_loss += loss_value
             pbar.set_postfix({'loss': loss_value})
 
+            # Update OneCycleLR after each batch
+            if self.use_onecycle and self.scheduler is not None:
+                self.scheduler.step()
+
         epoch_loss = running_loss / len(train_loader)
         return epoch_loss
 
@@ -174,6 +180,19 @@ class SegmentationTrainer:
         print(f"Device: {self.device}")
         print(f"Mixed Precision: {self.use_amp}")
 
+        # Initialize OneCycleLR scheduler
+        if self.use_onecycle:
+            total_steps = len(train_loader) * num_epochs
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
+                self.optimizer,
+                max_lr=1e-4,
+                total_steps=total_steps,
+                pct_start=0.3,  # 30% steps for warm-up
+                anneal_strategy='cos',
+                final_div_factor=30
+            )
+            print(f"✓ Using OneCycleLR (max_lr=1e-4, warm-up=30%)")
+
         for epoch in range(1, num_epochs + 1):
             # Train
             train_loss = self.train_epoch(train_loader, epoch)
@@ -181,12 +200,9 @@ class SegmentationTrainer:
             # Validate
             val_loss, val_iou, val_dice = self.validate(val_loader)
 
-            # Update scheduler
-            self.scheduler.step()
-
             # Track metrics
             self.train_losses.append(train_loss)
-            self.val_losses.append(val_loss)
+            self.val_losses.append(val_iou)
             self.val_ious.append(val_iou)
             self.val_dices.append(val_dice)
 
