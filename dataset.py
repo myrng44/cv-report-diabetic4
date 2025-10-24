@@ -120,20 +120,37 @@ class DRSegmentationDataset(Dataset):
 
 
 def get_classification_transforms(is_train: bool = True, img_size: int = 256):
-    """Get augmentation transforms for classification"""
+    """Get augmentation transforms for classification - Enhanced for >75% accuracy"""
 
     if is_train:
         transform = A.Compose([
             A.Resize(img_size, img_size),
+            # Geometric augmentations
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.Rotate(limit=15, p=0.5),
-            A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),  # Tăng từ 0.2
-            A.GaussNoise(p=0.3),
-            # Thêm augmentations mới
-            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=20, p=0.5),
-            A.CoarseDropout(max_holes=8, max_height=32, max_width=32, p=0.3),
-            A.GridDistortion(p=0.2),
+            A.Rotate(limit=30, p=0.6),  # Increased rotation
+            A.ShiftScaleRotate(shift_limit=0.15, scale_limit=0.15, rotate_limit=30, p=0.6),
+
+            # Color augmentations - stronger
+            A.RandomBrightnessContrast(brightness_limit=0.35, contrast_limit=0.35, p=0.7),
+            A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.5),
+            A.RandomGamma(gamma_limit=(80, 120), p=0.5),
+
+            # Noise and blur for robustness
+            A.OneOf([
+                A.GaussNoise(var_limit=(10, 50), p=1.0),
+                A.GaussianBlur(blur_limit=(3, 5), p=1.0),
+                A.MotionBlur(blur_limit=3, p=1.0),
+            ], p=0.5),
+
+            # Advanced augmentations
+            A.CoarseDropout(max_holes=8, max_height=int(img_size*0.1), max_width=int(img_size*0.1), p=0.4),
+            A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.3),
+            A.OpticalDistortion(distort_limit=0.3, shift_limit=0.3, p=0.3),
+
+            # CLAHE for better contrast
+            A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
+
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ToTensorV2()
         ])

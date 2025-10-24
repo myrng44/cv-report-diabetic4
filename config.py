@@ -31,17 +31,19 @@ for dir_path in [OUTPUT_DIR, MODEL_DIR, LOG_DIR, RESULT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
 # Model hyperparameters - Optimized for better performance
-IMG_SIZE = 512  # Optimal balance between detail and memory
-BATCH_SIZE = 8  # Tăng từ 2 lên 4 với size nhỏ hơn
+IMG_SIZE = 768  # For classification - higher resolution
+SEG_IMG_SIZE = 1024  # For segmentation - MUST be high for tiny lesions
+BATCH_SIZE = 8  # Balanced for T4 GPU
 NUM_WORKERS = 2  # Reduced for stability
 NUM_CLASSES = 5  # DR grades: 0, 1, 2, 3, 4
 SEG_CLASSES = 3  # Microaneurysms, Haemorrhages, Hard Exudates
 
-# Training parameters
-LEARNING_RATE = 3e-5  # Giảm từ 1e-4 cho segmentation stability
-NUM_EPOCHS = 120  # Tăng từ 60 để train đủ
-EARLY_STOPPING_PATIENCE = 30  # Tăng từ 30 để không stop quá sớm
-WEIGHT_DECAY = 2e-4  # Increased from 1e-4 for better regularization
+# Training parameters - Optimized
+LEARNING_RATE = 1e-4  # Classification
+SEG_LEARNING_RATE = 5e-5  # Segmentation - lower for stability
+NUM_EPOCHS = 150  # More epochs for convergence
+EARLY_STOPPING_PATIENCE = 35  # Longer patience
+WEIGHT_DECAY = 3e-4  # Stronger regularization
 
 # SANGO algorithm parameters
 POPULATION_SIZE = 20  # Reduced for faster computation
@@ -102,3 +104,19 @@ USE_TTA = False  # Disable for training, enable for inference
 # OneCycleLR parameters (for segmentation)
 MAX_LR = 1e-4  # Maximum learning rate for OneCycleLR
 PCT_START = 0.3  # Percentage of training for warm-up
+
+# Advanced training techniques
+USE_MIXUP = True
+MIXUP_ALPHA = 0.2  # Increased for more augmentation
+USE_CUTMIX = True
+CUTMIX_ALPHA = 1.0
+USE_LABEL_SMOOTHING = True
+LABEL_SMOOTHING = 0.1
+
+# Segmentation specific
+USE_DEEP_SUPERVISION = True
+FOCAL_ALPHA = 0.25
+FOCAL_GAMMA = 2.0
+DICE_WEIGHT = 0.5
+FOCAL_WEIGHT = 0.3
+TVERSKY_WEIGHT = 0.2
