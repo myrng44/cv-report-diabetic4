@@ -251,7 +251,7 @@ class ClassificationTrainer:
                 self.patience_counter = 0
 
                 # Save model
-                model_path = os.path.join(config.MODEL_DIR, 'best_classification_model.pth')
+                model_path = os.path.join(config.MODEL_DIR, 'best_model.pth')
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': self.model.state_dict(),
@@ -338,23 +338,40 @@ class ClassificationTrainer:
         print(f"Metrics plot saved to {config.RESULT_DIR}")
 
 
-def train_classification_model():
-    """Main function to train classification model"""
+def train_classification_model(num_epochs=None, batch_size=None, img_size=None, learning_rate=None, device=None):
+    """Main function to train classification model
+
+    Args:
+        num_epochs: Number of training epochs (default: config.NUM_EPOCHS)
+        batch_size: Batch size (default: config.BATCH_SIZE)
+        img_size: Image size (default: config.IMG_SIZE)
+        learning_rate: Learning rate (default: config.LEARNING_RATE)
+        device: Device to use (default: auto-detect)
+    """
+
+    # Use provided parameters or fall back to config
+    num_epochs = num_epochs or config.NUM_EPOCHS
+    batch_size = batch_size or config.BATCH_SIZE
+    img_size = img_size or config.IMG_SIZE
+    learning_rate = learning_rate or config.LEARNING_RATE
 
     # Set random seed
     torch.manual_seed(config.SEED)
     np.random.seed(config.SEED)
 
     # Device configuration
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    elif isinstance(device, str):
+        device = torch.device(device)
     print(f"Using device: {device}")
 
     # Create data loaders
     print("Loading datasets...")
     train_loader, val_loader = get_classification_loaders(
-        batch_size=config.BATCH_SIZE,
+        batch_size=batch_size,
         num_workers=config.NUM_WORKERS,
-        img_size=config.IMG_SIZE
+        img_size=img_size
     )
     print(f"Train samples: {len(train_loader.dataset)}")
     print(f"Validation samples: {len(val_loader.dataset)}")
@@ -378,7 +395,7 @@ def train_classification_model():
     trainer = ClassificationTrainer(model, device, use_amp=config.USE_AMP)
 
     # Train
-    best_acc = trainer.train(train_loader, val_loader, config.NUM_EPOCHS)
+    best_acc = trainer.train(train_loader, val_loader, num_epochs)
 
     return best_acc
 
