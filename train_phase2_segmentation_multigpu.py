@@ -424,7 +424,7 @@ if __name__ == '__main__':
 
     best_iou, best_dice, history = train_segmentation_multigpu(
         epochs=100,
-        batch_size=8,      # Tổng batch size (mỗi GPU 4)
+        batch_size=4,      # Tổng batch size (mỗi GPU 4)
         img_size=1024,     # HIGH resolution
         device=device
     )
