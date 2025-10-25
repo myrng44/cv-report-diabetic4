@@ -128,8 +128,8 @@ def get_classification_transforms(is_train: bool = True, img_size: int = 256):
             # Geometric augmentations
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.Rotate(limit=30, p=0.6),  # Increased rotation
-            A.ShiftScaleRotate(shift_limit=0.15, scale_limit=0.15, rotate_limit=30, p=0.6),
+            A.Rotate(limit=30, p=0.6),
+            A.Affine(scale=(0.85, 1.15), translate_percent=(0.15, 0.15), rotate=(-30, 30), p=0.6),
 
             # Color augmentations - stronger
             A.RandomBrightnessContrast(brightness_limit=0.35, contrast_limit=0.35, p=0.7),
@@ -138,15 +138,15 @@ def get_classification_transforms(is_train: bool = True, img_size: int = 256):
 
             # Noise and blur for robustness
             A.OneOf([
-                A.GaussNoise(var_limit=(10, 50), p=1.0),
+                A.GaussNoise(var_limit=50, p=1.0),  # Fixed: use var_limit not (min, max)
                 A.GaussianBlur(blur_limit=(3, 5), p=1.0),
                 A.MotionBlur(blur_limit=3, p=1.0),
             ], p=0.5),
 
-            # Advanced augmentations
-            A.CoarseDropout(max_holes=8, max_height=int(img_size*0.1), max_width=int(img_size*0.1), p=0.4),
+            # Advanced augmentations - FIXED parameter names
+            A.CoarseDropout(max_holes=8, max_height=int(img_size*0.1), max_width=int(img_size*0.1), fill_value=0, p=0.4),
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.3),
-            A.OpticalDistortion(distort_limit=0.3, shift_limit=0.3, p=0.3),
+            A.OpticalDistortion(distort_limit=0.3, p=0.3),  # Removed invalid shift_limit
 
             # CLAHE for better contrast
             A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
@@ -174,15 +174,15 @@ def get_segmentation_transforms(is_train: bool = True, img_size: int = 256):
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Rotate(limit=20, p=0.5),
-            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, p=0.5),
+            A.Affine(scale=(0.9, 1.1), translate_percent=(0.1, 0.1), rotate=(-15, 15), p=0.5),
 
             # Color augmentations - important for DR images
             A.RandomBrightnessContrast(brightness_limit=0.25, contrast_limit=0.25, p=0.6),
             A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=15, p=0.4),
             A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
 
-            # Elastic deformation for medical images
-            A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=0.3),
+            # Elastic deformation for medical images - FIXED parameter
+            A.ElasticTransform(alpha=1, sigma=50, p=0.3),  # Removed invalid alpha_affine
             A.GridDistortion(num_steps=5, distort_limit=0.2, p=0.3),
 
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
