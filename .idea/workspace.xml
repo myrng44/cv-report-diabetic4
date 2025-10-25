@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Optimize model configuration and training parameters for improved segmentation performance">
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
+    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Optimize model configuration and training parameters for improved segmentation and classification performance">
+      <change afterPath="$PROJECT_DIR$/.idea/csv-editor.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/QUICKSTART.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -203,7 +202,23 @@
       <option name="project" value="LOCAL" />
       <updated>1761181930928</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Optimize model configuration and training parameters for improved segmentation and classification performance">
+      <option name="closed" value="true" />
+      <created>1761325297186</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1761325297186</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Optimize model configuration and training parameters for improved segmentation and classification performance">
+      <option name="closed" value="true" />
+      <created>1761325795884</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1761325795884</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -214,6 +229,7 @@
     <MESSAGE value="Refine training parameters for improved stability and performance" />
     <MESSAGE value="Add dataset and test script for DR classification and segmentation" />
     <MESSAGE value="Optimize model configuration and training parameters for improved segmentation performance" />
-    <option name="LAST_COMMIT_MESSAGE" value="Optimize model configuration and training parameters for improved segmentation performance" />
+    <MESSAGE value="Optimize model configuration and training parameters for improved segmentation and classification performance" />
+    <option name="LAST_COMMIT_MESSAGE" value="Optimize model configuration and training parameters for improved segmentation and classification performance" />
   </component>
 </project>
