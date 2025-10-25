@@ -57,7 +57,7 @@ def calculate_metrics(pred, target, smooth=1e-6):
     return iou.item(), dice.item()
 
 
-def train_segmentation_multigpu(epochs=100, batch_size=8, img_size=1024, device='cuda'):
+def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device='cuda'):
     """
     Multi-GPU segmentation training
 
