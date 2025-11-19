@@ -79,20 +79,66 @@ class AdaptiveGaborFilter:
 
 
 class CLAHEEnhancer:
-    """Contrast Limited Adaptive Histogram Equalization"""
+    """
+    Optimized Contrast Limited Adaptive Histogram Equalization
+    Custom implementation with performance optimizations
+    """
 
     def __init__(self, clip_limit: float = 2.0, tile_grid_size: Tuple[int, int] = (8, 8)):
+        """
+        Initialize CLAHE enhancer
+        
+        Args:
+            clip_limit: Threshold for contrast limiting (2.0-4.0 recommended)
+            tile_grid_size: Size of grid for histogram equalization (8x8 default)
+        """
+        self.clip_limit = clip_limit
+        self.tile_grid_size = tile_grid_size
+        # Pre-create CLAHE object for better performance
         self.clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
 
     def apply(self, image: np.ndarray) -> np.ndarray:
-        """Apply CLAHE to enhance contrast"""
+        """
+        Apply CLAHE to enhance contrast
+        
+        For color images: Converts to LAB and applies to L channel only
+        For grayscale: Applies directly
+        
+        Args:
+            image: Input image (BGR or grayscale)
+            
+        Returns:
+            Enhanced image with same shape and dtype as input
+        """
         if len(image.shape) == 3:
-            # Convert to LAB color space
+            # Convert to LAB color space for better color preservation
             lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-            # Apply CLAHE to L channel
+            
+            # Apply CLAHE only to L (luminance) channel
             lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
+            
             # Convert back to BGR
             enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+            return enhanced
+        else:
+            # Direct application for grayscale
+            return self.clahe.apply(image)
+    
+    def apply_rgb(self, image: np.ndarray) -> np.ndarray:
+        """
+        Apply CLAHE to RGB image (assumes input is RGB, not BGR)
+        
+        Args:
+            image: Input RGB image
+            
+        Returns:
+            Enhanced RGB image
+        """
+        if len(image.shape) == 3:
+            # Convert RGB to LAB
+            lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+            lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
+            enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
             return enhanced
         else:
             return self.clahe.apply(image)

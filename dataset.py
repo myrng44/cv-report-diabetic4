@@ -12,6 +12,26 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from typing import Tuple, Optional
 import config
+from preprocessing import CLAHEEnhancer  # Import custom CLAHE
+
+
+# Initialize custom CLAHE enhancer globally for efficiency
+_clahe_enhancer = CLAHEEnhancer(clip_limit=4.0, tile_grid_size=(8, 8))
+
+
+class CustomCLAHE(A.ImageOnlyTransform):
+    """
+    Custom CLAHE transform using our preprocessing.py implementation
+    Integrates with Albumentations pipeline
+    """
+    
+    def __init__(self, clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5):
+        super(CustomCLAHE, self).__init__(always_apply, p)
+        self.enhancer = CLAHEEnhancer(clip_limit=clip_limit, tile_grid_size=tile_grid_size)
+    
+    def apply(self, img, **params):
+        """Apply custom CLAHE to RGB image"""
+        return self.enhancer.apply_rgb(img)
 
 
 class DRClassificationDataset(Dataset):
@@ -148,8 +168,8 @@ def get_classification_transforms(is_train: bool = True, img_size: int = 256):
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.3),
             A.OpticalDistortion(distort_limit=0.3, p=0.3),  # Removed invalid shift_limit
 
-            # CLAHE for better contrast
-            A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
+            # CLAHE for better contrast - USING CUSTOM IMPLEMENTATION
+            CustomCLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
 
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ToTensorV2()
@@ -179,7 +199,9 @@ def get_segmentation_transforms(is_train: bool = True, img_size: int = 256):
             # Color augmentations - important for DR images
             A.RandomBrightnessContrast(brightness_limit=0.25, contrast_limit=0.25, p=0.6),
             A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=15, p=0.4),
-            A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
+            
+            # CLAHE for better contrast - USING CUSTOM IMPLEMENTATION
+            CustomCLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
 
             # Elastic deformation for medical images - FIXED parameter
             A.ElasticTransform(alpha=1, sigma=50, p=0.3),  # Removed invalid alpha_affine
