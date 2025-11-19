@@ -4,14 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Optimize model configuration and training parameters for improved segmentation and classification performance">
+    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/quick_train.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_complete_pipeline.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_optimized_colab.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_optimized_pipeline.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_segmentation_optimized.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/OPTIMIZATION_ANALYSIS.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradcam_visualization.py" beforeDir="false" afterPath="$PROJECT_DIR$/gradcam_visualization.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference.py" beforeDir="false" afterPath="$PROJECT_DIR$/inference.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper_content.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/read_paper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_gradcam.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_gradcam.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/segmentation_model_improved.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_classification.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_phase2_segmentation.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_phase2_segmentation_multigpu.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_phase2_segmentation_multigpu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_segmentation.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_ultra_optimized.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,20 +48,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/ACER/PycharmProjects/Diabetic_CV_rp4&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.inference.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/ACER/PycharmProjects/Diabetic_CV_rp4",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
+        <option value="bundled-js-predefined-d6986cc7102b-9c94529fcfe0-JavaScript-PY-252.26199.168" />
         <option value="bundled-python-sdk-b3d66beaba9a-c6efb3732140-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26199.168" />
       </set>
     </attachedChunks>
@@ -67,6 +81,10 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1760946033303</updated>
+      <workItem from="1763088408804" duration="161000" />
+      <workItem from="1763127346909" duration="1989000" />
+      <workItem from="1763144281372" duration="32000" />
+      <workItem from="1763533080694" duration="1488000" />
     </task>
     <task id="LOCAL-00001" summary="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System">
       <option name="closed" value="true" />
@@ -228,8 +246,43 @@
       <option name="project" value="LOCAL" />
       <updated>1761370390049</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases">
+      <option name="closed" value="true" />
+      <created>1761380244644</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1761380244644</updated>
+    </task>
+    <task id="LOCAL-00022" summary="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases">
+      <option name="closed" value="true" />
+      <created>1761386566256</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1761386566256</updated>
+    </task>
+    <task id="LOCAL-00023" summary="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases">
+      <option name="closed" value="true" />
+      <created>1761387808813</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1761387808813</updated>
+    </task>
+    <task id="LOCAL-00024" summary="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases">
+      <option name="closed" value="true" />
+      <created>1761388493163</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1761388493163</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System" />
@@ -240,6 +293,10 @@
     <MESSAGE value="Add dataset and test script for DR classification and segmentation" />
     <MESSAGE value="Optimize model configuration and training parameters for improved segmentation performance" />
     <MESSAGE value="Optimize model configuration and training parameters for improved segmentation and classification performance" />
-    <option name="LAST_COMMIT_MESSAGE" value="Optimize model configuration and training parameters for improved segmentation and classification performance" />
+    <MESSAGE value="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Diabetic_CV_rp4$inference.coverage" NAME="inference Coverage Results" MODIFIED="1763534131628" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

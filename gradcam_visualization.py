@@ -133,8 +133,25 @@ def visualize_predictions_with_gradcam(model, image_path, device,
     input_tensor = transform(image=np.array(image_pil))['image'].unsqueeze(0).to(device)
 
     # Get model's last conv layer
-    # For DenseNet121, it's features.denseblock4
-    target_layer = model.model.features.denseblock4
+    # For DRClassificationModel, the features are stored in model.features
+    # Access the last denseblock (denseblock4) from the features sequential
+    target_layer = None
+    for name, module in model.features.named_children():
+        if 'denseblock4' in name or name == 'denseblock4':
+            target_layer = module
+            break
+
+    # If denseblock4 not found by name, get the last DenseBlock-like layer
+    if target_layer is None:
+        # Try to find it by checking module types
+        for module in reversed(list(model.features.children())):
+            if hasattr(module, 'denselayer1'):  # DenseBlock has denselayers
+                target_layer = module
+                break
+
+    # Fallback: use the entire features module
+    if target_layer is None:
+        target_layer = model.features
 
     # Create GradCAM
     gradcam = GradCAM(model, target_layer)
@@ -260,4 +277,3 @@ if __name__ == "__main__":
         'outputs/results/gradcam_visualizations',
         num_samples=10
     )
-

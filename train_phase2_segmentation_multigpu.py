@@ -291,7 +291,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
                 'best_iou': best_iou,
                 'best_dice': best_dice,
                 'num_gpus': num_gpus,
-            }, 'outputs/models/best_segmentation_model.pth')
+            }, 'outputs/models/best_seg_model.pth')  # ✅ SỬA TÊN FILE CHO KHỚP
             print(f"✅ Best model saved! (IoU: {best_iou:.4f}, Dice: {best_dice:.4f})")
             patience = 0
         else:
@@ -342,7 +342,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
     print(f"📊 Best Dice: {best_dice:.4f}")
     print(f"⏱️  Training Time: {training_time:.1f} minutes")
     print(f"🎮 Used {num_gpus} GPU(s)")
-    print(f"💾 Model saved: outputs/models/best_segmentation_model.pth")
+    print(f"💾 Model saved: outputs/models/best_seg_model.pth")
     print("="*80 + "\n")
 
     # Plot training curves
@@ -434,6 +434,5 @@ if __name__ == '__main__':
     print("="*80)
     print("Both models trained successfully:")
     print("  ✅ Classification model: outputs/models/best_classification_model.pth")
-    print("  ✅ Segmentation model:   outputs/models/best_segmentation_model.pth")
+    print("  ✅ Segmentation model:   outputs/models/best_seg_model.pth")  # ✅ SỬA TÊN
     print("="*80 + "\n")
-

@@ -224,7 +224,7 @@ def demo_inference():
     """Demo inference on sample images"""
 
     # Paths to models
-    class_model_path = os.path.join(config.MODEL_DIR, 'best_model.pth')
+    class_model_path = os.path.join(config.MODEL_DIR, 'best_classification_model.pth')
     seg_model_path = os.path.join(config.MODEL_DIR, 'best_seg_model.pth')
 
     # Create inference object

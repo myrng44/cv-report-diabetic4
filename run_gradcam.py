@@ -21,14 +21,27 @@ def main():
     print("Loading trained model...")
     model = create_classification_model(num_classes=5, pretrained=False)
 
-    # Try to load ultra-optimized model first, fallback to regular
-    if os.path.exists('outputs/models/best_model_ultra.pth'):
-        model.load_state_dict(torch.load('outputs/models/best_model_ultra.pth', map_location=device))
-        print("✓ Loaded ultra-optimized model\n")
-    elif os.path.exists('outputs/models/best_model.pth'):
-        model.load_state_dict(torch.load('outputs/models/best_model.pth', map_location=device))
-        print("✓ Loaded regular model\n")
-    else:
+    # Try to load classification model
+    model_paths = [
+        'outputs/models/best_classification_model.pth',
+        'outputs/models/best_model_ultra.pth',
+        'outputs/models/best_model.pth'
+    ]
+
+    model_loaded = False
+    for model_path in model_paths:
+        if os.path.exists(model_path):
+            checkpoint = torch.load(model_path, map_location=device)
+            # Handle both direct state_dict and checkpoint dict
+            if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+                model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                model.load_state_dict(checkpoint)
+            print(f"✓ Loaded model from: {model_path}\n")
+            model_loaded = True
+            break
+
+    if not model_loaded:
         print("✗ No trained model found!")
         print("Please train a model first using:")
         print("  python train_ultra_optimized.py")
