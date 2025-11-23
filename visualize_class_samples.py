@@ -1,6 +1,6 @@
 """
-Script to visualize sample images from each DR class (0-5)
-Creates a grid image showing examples from each class
+Script để trực quan hóa các mẫu ảnh từ mỗi lớp DR (0-5)
+Tảo ảnh lưới hiển thị các ví dụ từ mỗi lớp
 """
 
 import os
@@ -13,33 +13,33 @@ import config
 
 def visualize_class_samples(num_samples_per_class=3, output_path=None):
     """
-    Create visualization of sample images from each DR class
+    Tạo trực quan hóa các mẫu ảnh từ mỗi lớp DR
 
     Args:
-        num_samples_per_class: Number of samples to show per class
-        output_path: Path to save the output image
+        num_samples_per_class: Số mẫu để hiển thị cho mỗi lớp
+        output_path: Đường dẫn để lưu ảnh đầu ra
     """
 
-    # Read training labels
+    # Đọc nhãn huấn luyện
     labels_csv = config.CLASS_TRAIN_LABELS
     img_dir = config.CLASS_TRAIN_IMG_DIR
 
-    print(f"Reading labels from: {labels_csv}")
+    print(f"Đang đọc nhãn từ: {labels_csv}")
     df = pd.read_csv(labels_csv)
 
-    # Get class distribution
-    print("\nClass distribution:")
+    # Lấy phân phối lớp
+    print("\nPhân phối lớp:")
     class_counts = df['Retinopathy grade'].value_counts().sort_index()
     for grade, count in class_counts.items():
         print(f"  Grade {grade}: {count} images")
 
-    # Prepare figure
-    num_classes = 5  # Classes 0-4
+    # Chuẩn bị hình
+    num_classes = 5  # Các lớp 0-4
     fig = plt.figure(figsize=(18, 12))
     gs = GridSpec(num_classes, num_samples_per_class + 1,
                   figure=fig, wspace=0.3, hspace=0.4)
 
-    # Grade descriptions
+    # Mô tả mức độ
     grade_descriptions = {
         0: "Grade 0: No DR\n(Normal)",
         1: "Grade 1: Mild NPDR\n(Microaneurysms only)",
@@ -48,27 +48,27 @@ def visualize_class_samples(num_samples_per_class=3, output_path=None):
         4: "Grade 4: PDR\n(Proliferative DR)"
     }
 
-    # For each class, get sample images
+    # Với mỗi lớp, lấy các ảnh mẫu
     for class_idx in range(num_classes):
-        # Get images for this class
+        # Lấy ảnh cho lớp này
         class_df = df[df['Retinopathy grade'] == class_idx]
 
         if len(class_df) == 0:
             print(f"\nWarning: No images found for class {class_idx}")
             continue
 
-        # Sample random images
+        # Lấy mẫu ảnh ngẫu nhiên
         sample_size = min(num_samples_per_class, len(class_df))
         sampled = class_df.sample(n=sample_size)  # Ngẫu nhiên mỗi lần chạy
 
-        # Add class label in first column
+        # Thêm nhãn lớp ở cột đầu tiên
         ax_label = fig.add_subplot(gs[class_idx, 0])
         ax_label.text(0.5, 0.5, grade_descriptions.get(class_idx, f"Grade {class_idx}"),
                      ha='center', va='center', fontsize=12, fontweight='bold',
                      bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7))
         ax_label.axis('off')
 
-        # Display sample images
+        # Hiển thị các ảnh mẫu
         for img_idx, (_, row) in enumerate(sampled.iterrows()):
             img_name = row['Image name']
             img_path = os.path.join(img_dir, f"{img_name}.jpg")
@@ -77,21 +77,21 @@ def visualize_class_samples(num_samples_per_class=3, output_path=None):
                 print(f"Warning: Image not found: {img_path}")
                 continue
 
-            # Read and display image
+            # Đọc và hiển thị ảnh
             img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-            # Add to subplot
+            # Thêm vào subplot
             ax = fig.add_subplot(gs[class_idx, img_idx + 1])
             ax.imshow(img)
             ax.set_title(f"{img_name}", fontsize=9)
             ax.axis('off')
 
-    # Overall title
-    fig.suptitle('Diabetic Retinopathy - Sample Images by Grade (IDRiD Dataset)',
+    # Tiêu đề tổng thể
+    fig.suptitle('Bệnh Võng mạc Đái tháo đường - Mẫu Ảnh theo Mức độ (Tập dữ liệu IDRiD)',
                  fontsize=16, fontweight='bold', y=0.98)
 
-    # Save figure
+    # Lưu hình
     if output_path is None:
         output_path = os.path.join(config.OUTPUT_DIR, 'class_samples_visualization.png')
 
@@ -104,7 +104,7 @@ def visualize_class_samples(num_samples_per_class=3, output_path=None):
     plt.close()
 
 def create_preprocessed_samples(df, img_dir, num_samples_per_class=2):
-    """Create visualization showing original vs preprocessed images"""
+    """Tạo trực quan hóa hiển thị ảnh gốc so với ảnh đã tiền xử lý"""
 
     from preprocessing import preprocess_fundus_image
 
@@ -174,27 +174,27 @@ def create_preprocessed_samples(df, img_dir, num_samples_per_class=2):
     plt.close()
 
 def analyze_dataset_statistics():
-    """Print detailed dataset statistics"""
+    """In thống kê chi tiết của tập dữ liệu"""
 
     print("\n" + "="*70)
-    print("DATASET STATISTICS - IDRiD Diabetic Retinopathy")
+    print("THỐNG KÊ TẬP DỮ LIỆU - IDRiD Bệnh Võng mạc Đái tháo đường")
     print("="*70)
 
-    # Training set
+    # Tập huấn luyện
     train_df = pd.read_csv(config.CLASS_TRAIN_LABELS)
-    print("\n📊 TRAINING SET:")
-    print(f"Total images: {len(train_df)}")
-    print("\nClass distribution:")
+    print("\n📊 TẬP HUẤN LUYỆN:")
+    print(f"Tổng số ảnh: {len(train_df)}")
+    print("\nPhân phối lớp:")
     for grade in sorted(train_df['Retinopathy grade'].unique()):
         count = len(train_df[train_df['Retinopathy grade'] == grade])
         percentage = (count / len(train_df)) * 100
         print(f"  Grade {grade}: {count:3d} images ({percentage:5.2f}%)")
 
-    # Test set
+    # Tập kiểm tra
     test_df = pd.read_csv(config.CLASS_TEST_LABELS)
-    print("\n📊 TEST SET:")
-    print(f"Total images: {len(test_df)}")
-    print("\nClass distribution:")
+    print("\n📊 TẬP KIỂM TRA:")
+    print(f"Tổng số ảnh: {len(test_df)}")
+    print("\nPhân phối lớp:")
     for grade in sorted(test_df['Retinopathy grade'].unique()):
         count = len(test_df[test_df['Retinopathy grade'] == grade])
         percentage = (count / len(test_df)) * 100
@@ -203,14 +203,14 @@ def analyze_dataset_statistics():
     print("\n" + "="*70)
 
 if __name__ == "__main__":
-    print("🔍 Creating visualization of DR class samples...")
+    print("🔍 Đang tạo trực quan hóa các mẫu lớp DR...")
     print("="*70)
 
-    # Show dataset statistics first
+    # Hiển thị thống kê tập dữ liệu trước
     analyze_dataset_statistics()
 
-    # Create visualizations
-    print("\n📸 Generating sample images visualization...")
+    # Tạo các trực quan hóa
+    print("\n📸 Đang tạo trực quan hóa các ảnh mẫu...")
     visualize_class_samples(num_samples_per_class=3)
 
-    print("\n✅ Done! Check the outputs folder for generated images.")
+    print("\n✅ Hoàn thành! Kiểm tra thư mục outputs cho các ảnh đã tạo.")

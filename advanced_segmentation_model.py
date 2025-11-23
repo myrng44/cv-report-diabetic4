@@ -1,6 +1,6 @@
 """
-Advanced Segmentation Model with Attention and Multi-Scale Features
-Optimized for tiny lesion detection in DR
+Mô hình Phân đoạn Nâng cao với Attention và Đặc trưng Đa tỷ lệ
+Được tối ưu hóa cho phát hiện tổn thương nhỏ trong DR
 """
 
 import torch
@@ -10,7 +10,7 @@ from torchvision import models
 
 
 class SpatialAttention(nn.Module):
-    """Spatial attention module to focus on lesion regions"""
+    """Module attention không gian để tập trung vào vùng tổn thương"""
 
     def __init__(self, kernel_size=7):
         super(SpatialAttention, self).__init__()
@@ -26,7 +26,7 @@ class SpatialAttention(nn.Module):
 
 
 class ChannelAttention(nn.Module):
-    """Channel attention module"""
+    """Module attention kênh"""
 
     def __init__(self, in_channels, reduction=16):
         super(ChannelAttention, self).__init__()
@@ -48,7 +48,7 @@ class ChannelAttention(nn.Module):
 
 
 class CBAM(nn.Module):
-    """Convolutional Block Attention Module"""
+    """Module Attention Khối Tích chập (Convolutional Block Attention Module)"""
 
     def __init__(self, in_channels, reduction=16, kernel_size=7):
         super(CBAM, self).__init__()
@@ -62,7 +62,7 @@ class CBAM(nn.Module):
 
 
 class ConvBlock(nn.Module):
-    """Convolutional block with attention"""
+    """Khối tích chập với attention"""
 
     def __init__(self, in_channels, out_channels, use_attention=True):
         super(ConvBlock, self).__init__()
@@ -87,12 +87,12 @@ class ConvBlock(nn.Module):
 
 
 class UNetWithAttention(nn.Module):
-    """U-Net with Attention Mechanisms for tiny lesion segmentation"""
+    """U-Net với Cơ chế Attention cho phân đoạn tổn thương nhỏ"""
 
     def __init__(self, in_channels=3, out_channels=3, base_filters=64):
         super(UNetWithAttention, self).__init__()
 
-        # Encoder
+        # Bộ mã hóa (Encoder)
         self.enc1 = ConvBlock(in_channels, base_filters, use_attention=True)
         self.pool1 = nn.MaxPool2d(2)
 
@@ -108,7 +108,7 @@ class UNetWithAttention(nn.Module):
         # Bottleneck
         self.bottleneck = ConvBlock(base_filters * 8, base_filters * 16, use_attention=True)
 
-        # Decoder
+        # Bộ giải mã (Decoder)
         self.up4 = nn.ConvTranspose2d(base_filters * 16, base_filters * 8, 2, stride=2)
         self.dec4 = ConvBlock(base_filters * 16, base_filters * 8, use_attention=True)
 
@@ -121,11 +121,11 @@ class UNetWithAttention(nn.Module):
         self.up1 = nn.ConvTranspose2d(base_filters * 2, base_filters, 2, stride=2)
         self.dec1 = ConvBlock(base_filters * 2, base_filters, use_attention=True)
 
-        # Output
+        # Đầu ra
         self.out = nn.Conv2d(base_filters, out_channels, 1)
 
     def forward(self, x):
-        # Encoder
+        # Bộ mã hóa
         enc1 = self.enc1(x)
         enc2 = self.enc2(self.pool1(enc1))
         enc3 = self.enc3(self.pool2(enc2))
@@ -134,7 +134,7 @@ class UNetWithAttention(nn.Module):
         # Bottleneck
         bottleneck = self.bottleneck(self.pool4(enc4))
 
-        # Decoder
+        # Bộ giải mã
         dec4 = self.up4(bottleneck)
         dec4 = torch.cat([dec4, enc4], dim=1)
         dec4 = self.dec4(dec4)
@@ -151,7 +151,7 @@ class UNetWithAttention(nn.Module):
         dec1 = torch.cat([dec1, enc1], dim=1)
         dec1 = self.dec1(dec1)
 
-        # Output
+        # Đầu ra
         out = self.out(dec1)
 
         return out
@@ -159,16 +159,16 @@ class UNetWithAttention(nn.Module):
 
 class FocalTverskyLoss(nn.Module):
     """
-    Focal Tversky Loss - Better for highly imbalanced tiny lesions
-    Combines Tversky (generalization of Dice) with Focal (hard example mining)
+    Focal Tversky Loss - Tốt hơn cho các tổn thương nhỏ mất cân bằng cao
+    Kết hợp Tversky (tổng quát hóa của Dice) với Focal (khai thác ví dụ khó)
     """
 
     def __init__(self, alpha=0.7, beta=0.3, gamma=0.75, smooth=1e-6):
         """
         Args:
-            alpha: weight of false positives
-            beta: weight of false negatives (higher = more recall)
-            gamma: focal parameter (higher = focus on hard examples)
+            alpha: trọng số của false positives
+            beta: trọng số của false negatives (cao hơn = recall nhiều hơn)
+            gamma: tham số focal (cao hơn = tập trung vào ví dụ khó)
         """
         super(FocalTverskyLoss, self).__init__()
         self.alpha = alpha
@@ -179,7 +179,7 @@ class FocalTverskyLoss(nn.Module):
     def forward(self, pred, target):
         pred = torch.sigmoid(pred)
 
-        # Flatten tensors
+        # Làm phẳng tensors
         pred = pred.view(-1)
         target = target.view(-1)
 
@@ -188,7 +188,7 @@ class FocalTverskyLoss(nn.Module):
         fp = ((1 - target) * pred).sum()
         fn = (target * (1 - pred)).sum()
 
-        # Tversky index
+        # Chỉ số Tversky
         tversky = (tp + self.smooth) / (tp + self.alpha * fp + self.beta * fn + self.smooth)
 
         # Focal Tversky Loss
@@ -199,7 +199,7 @@ class FocalTverskyLoss(nn.Module):
 
 class CombinedSegmentationLoss(nn.Module):
     """
-    Combined loss for better segmentation of tiny lesions
+    Loss kết hợp để phân đoạn tốt hơn các tổn thương nhỏ
     = Focal Tversky + Dice + BCE
     """
 
@@ -213,7 +213,7 @@ class CombinedSegmentationLoss(nn.Module):
         self.bce_weight = bce_weight
 
     def dice_loss(self, pred, target, smooth=1e-6):
-        """Dice loss"""
+        """Loss Dice"""
         pred = torch.sigmoid(pred)
         pred = pred.view(-1)
         target = target.view(-1)
@@ -226,8 +226,8 @@ class CombinedSegmentationLoss(nn.Module):
     def forward(self, pred, target):
         """
         Args:
-            pred: model output [B, C, H, W] (logits)
-            target: ground truth [B, C, H, W] (0 or 1)
+            pred: đầu ra mô hình [B, C, H, W] (logits)
+            target: ground truth [B, C, H, W] (0 hoặc 1)
         """
         ft_loss = self.focal_tversky(pred, target)
         dice_loss = self.dice_loss(pred, target)
@@ -241,7 +241,7 @@ class CombinedSegmentationLoss(nn.Module):
 
 
 def create_advanced_segmentation_model(in_channels=3, out_channels=3, base_filters=64):
-    """Create advanced segmentation model with attention"""
+    """Tạo mô hình phân đoạn nâng cao với attention"""
     model = UNetWithAttention(
         in_channels=in_channels,
         out_channels=out_channels,
@@ -251,29 +251,29 @@ def create_advanced_segmentation_model(in_channels=3, out_channels=3, base_filte
 
 
 def create_advanced_loss():
-    """Create advanced combined loss for tiny lesion segmentation"""
+    """Tạo loss kết hợp nâng cao cho phân đoạn tổn thương nhỏ"""
     return CombinedSegmentationLoss(
-        ft_weight=1.0,  # Focal Tversky - most important for tiny lesions
-        dice_weight=0.5,  # Dice - for overall structure
-        bce_weight=0.3  # BCE - for pixel-wise accuracy
+        ft_weight=1.0,  # Focal Tversky - quan trọng nhất cho tổn thương nhỏ
+        dice_weight=0.5,  # Dice - cho cấu trúc tổng thể
+        bce_weight=0.3  # BCE - cho độ chính xác từng pixel
     )
 
 
 if __name__ == "__main__":
-    # Test model
+    # Kiểm tra mô hình
     model = create_advanced_segmentation_model()
     x = torch.randn(2, 3, 512, 512)
     y = model(x)
     print(f"Input shape: {x.shape}")
     print(f"Output shape: {y.shape}")
 
-    # Test loss
+    # Kiểm tra loss
     loss_fn = create_advanced_loss()
     target = torch.randint(0, 2, (2, 3, 512, 512)).float()
     loss = loss_fn(y, target)
     print(f"Loss: {loss.item():.4f}")
 
-    # Count parameters
+    # Đếm tham số
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total parameters: {total_params:,}")
 

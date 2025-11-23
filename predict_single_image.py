@@ -24,20 +24,20 @@ from advanced_segmentation_model import create_advanced_segmentation_model
 
 def preprocess_for_segmentation(image_path, target_size=512):
     """
-    ⚠️ CRITICAL: Must match training preprocessing!
-    Training used ImageNet normalization, so inference MUST use it too!
+    ⚠️ QUAN TRỌNG: Phải khớp với tiền xử lý huấn luyện!
+    Huấn luyện sử dụng chuẩn hóa ImageNet, nên suy luận CŨNG PHẢI dùng nó!
     """
-    # Read image
+    # Đọc ảnh
     image = cv2.imread(image_path)
     if image is None:
-        raise ValueError(f"Cannot read image: {image_path}")
+        raise ValueError(f"Không thể đọc ảnh: {image_path}")
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Apply same transforms as training (WITHOUT augmentation)
+    # Áp dụng cùng phép biến đổi như huấn luyện (KHÔNG tăng cường)
     transform = A.Compose([
         A.Resize(target_size, target_size),
-        # ✅ CRITICAL: Same normalization as training!
+        # ✅ QUAN TRỌNG: Chuẩn hóa giống như huấn luyện!
         A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2()
     ])
@@ -53,12 +53,12 @@ class DRPredictor:
 
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"Using device: {self.device}")
+        print(f"Sử dụng thiết bị: {self.device}")
 
-        # Load Classification Model
+        # Tải Mô hình Phân loại
         class_model_path = os.path.join(config.MODEL_DIR, 'best_classification_model.pth')
         if os.path.exists(class_model_path):
-            print(f"Loading classification model...")
+            print(f"Đang tải mô hình phân loại...")
             self.class_model = create_classification_model(num_classes=config.NUM_CLASSES)
             checkpoint = torch.load(class_model_path, map_location=self.device)
             self.class_model.load_state_dict(checkpoint['model_state_dict'])
@@ -69,7 +69,7 @@ class DRPredictor:
             print(f"⚠ Classification model not found at {class_model_path}")
             self.class_model = None
 
-        # Load Segmentation Model
+        # Tải Mô hình Phân đoạn
         seg_model_path = os.path.join(config.MODEL_DIR, 'best_seg_model.pth')
         if os.path.exists(seg_model_path):
             print(f"Loading segmentation model...")
@@ -95,7 +95,7 @@ class DRPredictor:
         print(f"🔍 Analyzing: {os.path.basename(image_path)}")
         print(f"{'='*80}")
 
-        # Load original image
+        # Tải ảnh gốc
         image = cv2.imread(image_path)
         if image is None:
             print(f"❌ Cannot load image: {image_path}")
@@ -103,7 +103,7 @@ class DRPredictor:
 
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Classification
+        # Phân loại
         pred_class = None
         confidence = None
         all_probs = None
@@ -127,14 +127,14 @@ class DRPredictor:
                 for i, (grade, prob) in enumerate(zip(self.dr_grades, all_probs)):
                     print(f"      {grade:20s}: {prob*100:5.2f}%")
             except Exception as e:
-                print(f"   ❌ Error during classification: {e}")
+                print(f"   ❌ Lỗi trong quá trình phân loại: {e}")
 
-        # Segmentation
+        # Phân đoạn
         masks = None
         if self.seg_model is not None:
-            print(f"\n🎯 Segmentation:")
+            print(f"\n🎯 Phân đoạn:")
             try:
-                # ✅ FIXED: Use correct preprocessing with ImageNet normalization!
+                # ✅ ĐÃ SỬA: Dùng tiền xử lý đúng với chuẩn hóa ImageNet!
                 image_tensor = preprocess_for_segmentation(image_path, target_size=512)
                 image_tensor = image_tensor.unsqueeze(0).to(self.device)
 
@@ -144,12 +144,12 @@ class DRPredictor:
                     output = self.seg_model(image_tensor)
                     masks = torch.sigmoid(output)
 
-                    # Debug info
-                    print(f"   Output logits range: [{output.min():.3f}, {output.max():.3f}]")
-                    print(f"   Sigmoid probs range: [{masks.min():.6f}, {masks.max():.6f}]")
+                    # Thông tin debug
+                    print(f"   Phạm vi logits đầu ra: [{output.min():.3f}, {output.max():.3f}]"))
+                    print(f"   Phạm vi xác suất Sigmoid: [{masks.min():.6f}, {masks.max():.6f}]")
 
-                    # ✅ Adaptive threshold based on output statistics
-                    threshold = 0.15  # Start with conservative threshold
+                    # ✅ Ngưỡng thích nghi dựa trên thống kê đầu ra
+                    threshold = 0.15  # Bắt đầu với ngưỡng thận trọng
                     masks_binary = (masks > threshold).float()
                     masks = masks_binary[0].cpu().numpy()  # (3, H, W)
 
@@ -162,13 +162,13 @@ class DRPredictor:
                 traceback.print_exc()
                 masks = None
 
-        # Visualization
+        # Trực quan hóa
         self.visualize_results(image_rgb, pred_class, confidence, all_probs, masks, save_path)
 
         return pred_class, confidence, masks
 
     def visualize_results(self, image_rgb, pred_class, confidence, all_probs, masks, save_path):
-        """Tạo visualization đẹp"""
+        """Tạo trực quan hóa đẹp"""
 
         fig = plt.figure(figsize=(20, 10))
 
@@ -178,7 +178,7 @@ class DRPredictor:
         ax1.set_title('Original Retina Image', fontsize=14, fontweight='bold')
         ax1.axis('off')
 
-        # 2. Classification Result
+        # 2. Kết quả Phân loại
         if pred_class is not None and all_probs is not None:
             ax2 = plt.subplot(2, 4, 2)
             colors = ['green' if i == pred_class else 'gray' for i in range(len(self.dr_grades))]
@@ -188,22 +188,22 @@ class DRPredictor:
                          fontsize=14, fontweight='bold')
             ax2.set_xlim(0, 100)
 
-            # Add value labels
+            # Thêm nhãn giá trị
             for i, (bar, prob) in enumerate(zip(bars, all_probs)):
                 ax2.text(prob*100 + 2, bar.get_y() + bar.get_height()/2,
                         f'{prob*100:.1f}%', va='center', fontsize=10)
 
-        # 3-5. Segmentation Masks
+        # 3-5. Masks Phân đoạn
         if masks is not None:
             lesion_colors = ['red', 'yellow', 'cyan']
 
             for i, (lesion, color) in enumerate(zip(self.lesion_types, lesion_colors)):
                 ax = plt.subplot(2, 4, 3 + i)
 
-                # Resize mask to match original image
+                # Thay đổi kích thước mask để khớp với ảnh gốc
                 mask_resized = cv2.resize(masks[i], (image_rgb.shape[1], image_rgb.shape[0]))
 
-                # Create overlay
+                # Tạo lớp phủ
                 overlay = image_rgb.copy()
                 colored_mask = np.zeros_like(overlay)
 
@@ -223,7 +223,7 @@ class DRPredictor:
                            fontsize=12, fontweight='bold')
                 ax.axis('off')
 
-            # 6. Combined Segmentation
+            # 6. Phân đoạn Kết hợp
             ax6 = plt.subplot(2, 4, 6)
             combined_overlay = image_rgb.copy()
 
@@ -248,7 +248,7 @@ class DRPredictor:
 
         plt.tight_layout()
 
-        # Save
+        # Lưu
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"\n✓ Visualization saved to: {save_path}")
@@ -266,15 +266,15 @@ def main():
     parser.add_argument('--output', type=str, default=None, help='Path to save result')
     args = parser.parse_args()
 
-    # Check if image exists
+    # Kiểm tra xem ảnh có tồn tại không
     if not os.path.exists(args.image):
-        print(f"❌ Image not found: {args.image}")
+        print(f"❌ Không tìm thấy ảnh: {args.image}")
         return
 
-    # Create predictor
+    # Tạo bộ dự đoán
     predictor = DRPredictor()
 
-    # Predict
+    # Dự đoán
     if args.output is None:
         filename = os.path.splitext(os.path.basename(args.image))[0]
         args.output = os.path.join(config.RESULT_DIR, f'prediction_{filename}.png')
@@ -282,7 +282,7 @@ def main():
     predictor.predict(args.image, args.output)
 
     print(f"\n{'='*80}")
-    print("✅ PREDICTION COMPLETED!")
+    print("✅ DỰ ĐOÁN HOÀN THÀNH!")
     print(f"{'='*80}\n")
 
 

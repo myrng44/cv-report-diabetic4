@@ -1,5 +1,5 @@
 """
-Dataset and DataLoader for DR Classification and Segmentation
+Dataset và DataLoader cho Phân loại và Phân đoạn DR
 """
 
 import os
@@ -12,17 +12,17 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from typing import Tuple, Optional
 import config
-from preprocessing import CLAHEEnhancer  # Import custom CLAHE
+from preprocessing import CLAHEEnhancer  # Import CLAHE tùy chỉnh
 
 
-# Initialize custom CLAHE enhancer globally for efficiency
+# Khởi tạo bộ tăng cường CLAHE tùy chỉnh toàn cục để tăng hiệu suất
 _clahe_enhancer = CLAHEEnhancer(clip_limit=4.0, tile_grid_size=(8, 8))
 
 
 class CustomCLAHE(A.ImageOnlyTransform):
     """
-    Custom CLAHE transform using our preprocessing.py implementation
-    Integrates with Albumentations pipeline
+    Transform CLAHE tùy chỉnh sử dụng triển khai preprocessing.py của chúng ta
+    Tích hợp với pipeline Albumentations
     """
     
     def __init__(self, clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5):
@@ -30,19 +30,19 @@ class CustomCLAHE(A.ImageOnlyTransform):
         self.enhancer = CLAHEEnhancer(clip_limit=clip_limit, tile_grid_size=tile_grid_size)
     
     def apply(self, img, **params):
-        """Apply custom CLAHE to RGB image"""
+        """Áp dụng CLAHE tùy chỉnh cho ảnh RGB"""
         return self.enhancer.apply_rgb(img)
 
 
 class DRClassificationDataset(Dataset):
-    """Dataset for DR classification"""
+    """Dataset cho phân loại DR"""
 
     def __init__(self, image_dir: str, labels_csv: str, transform=None, is_train: bool = True):
         self.image_dir = image_dir
         self.transform = transform
         self.is_train = is_train
 
-        # Read labels
+        # Đọc nhãn
         df = pd.read_csv(labels_csv)
         self.image_names = df['Image name'].values
         self.labels = df['Retinopathy grade'].values
@@ -51,26 +51,26 @@ class DRClassificationDataset(Dataset):
         return len(self.image_names)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
-        # Load image
+        # Tải ảnh
         img_name = self.image_names[idx]
         img_path = os.path.join(self.image_dir, f"{img_name}.jpg")
 
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Apply transforms
+        # Áp dụng các phép biến đổi
         if self.transform:
             augmented = self.transform(image=image)
             image = augmented['image']
 
-        # Get label
+        # Lấy nhãn
         label = int(self.labels[idx])
 
         return image, label
 
 
 class DRSegmentationDataset(Dataset):
-    """Dataset for DR lesion segmentation"""
+    """Dataset cho phân đoạn tổn thương DR"""
 
     def __init__(self, image_dir: str, mask_dir: str, transform=None,
                  lesion_types: list = None):
@@ -78,7 +78,7 @@ class DRSegmentationDataset(Dataset):
         self.mask_dir = mask_dir
         self.transform = transform
 
-        # Define lesion types with folder names and file suffixes
+        # Định nghĩa các loại tổn thương với tên thư mục và hậu tố file
         if lesion_types is None:
             self.lesion_types = [
                 ('1. Microaneurysms_', 'MA'),
@@ -88,20 +88,20 @@ class DRSegmentationDataset(Dataset):
         else:
             self.lesion_types = lesion_types
 
-        # Get all image files
+        # Lấy tất cả các file ảnh
         self.image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.jpg')])
 
     def __len__(self) -> int:
         return len(self.image_files)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        # Load image
+        # Tải ảnh
         img_name = self.image_files[idx]
         img_path = os.path.join(self.image_dir, img_name)
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Load masks for all lesion types
+        # Tải mask cho tất cả các loại tổn thương
         base_name = img_name.replace('.jpg', '')
         masks = []
 
@@ -111,27 +111,27 @@ class DRSegmentationDataset(Dataset):
             if os.path.exists(mask_path):
                 mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
             else:
-                # Create empty mask if not exists
+                # Tạo mask rỗng nếu không tồn tại
                 mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
 
             masks.append(mask)
 
-        # Stack masks (channels: MA, HEM, EX)
+        # Xếp chồng các mask (channels: MA, HEM, EX)
         mask = np.stack(masks, axis=-1)
 
-        # Apply transforms
+        # Áp dụng các phép biến đổi
         if self.transform:
             augmented = self.transform(image=image, mask=mask)
             image = augmented['image']
             mask = augmented['mask']
             
-            # Normalize mask to [0, 1]
+            # Chuẩn hóa mask về [0, 1]
             mask = mask.float() / 255.0
             
-            # Permute mask from [H, W, C] to [C, H, W] to match PyTorch convention
+            # Hoán vị mask từ [H, W, C] sang [C, H, W] theo quy ước PyTorch
             mask = mask.permute(2, 0, 1)
         else:
-            # No transform: convert to tensor manually
+            # Không có transform: chuyển sang tensor thủ công
             mask = torch.from_numpy(mask).float() / 255.0
             mask = mask.permute(2, 0, 1)
             image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
@@ -140,35 +140,35 @@ class DRSegmentationDataset(Dataset):
 
 
 def get_classification_transforms(is_train: bool = True, img_size: int = 256):
-    """Get augmentation transforms for classification - Enhanced for >75% accuracy"""
+    """Lấy các phép biến đổi tăng cường cho phân loại - Tăng cường để đạt >75% accuracy"""
 
     if is_train:
         transform = A.Compose([
             A.Resize(img_size, img_size),
-            # Geometric augmentations
+            # Tăng cường hình học
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Rotate(limit=30, p=0.6),
             A.Affine(scale=(0.85, 1.15), translate_percent=(0.15, 0.15), rotate=(-30, 30), p=0.6),
 
-            # Color augmentations - stronger
+            # Tăng cường màu sắc - mạnh hơn
             A.RandomBrightnessContrast(brightness_limit=0.35, contrast_limit=0.35, p=0.7),
             A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.5),
             A.RandomGamma(gamma_limit=(80, 120), p=0.5),
 
-            # Noise and blur for robustness
+            # Nhiễu và làm mờ để tăng độ bền vững
             A.OneOf([
-                A.GaussNoise(var_limit=50, p=1.0),  # Fixed: use var_limit not (min, max)
+                A.GaussNoise(var_limit=50, p=1.0),  # Fixed: sử dụng var_limit không phải (min, max)
                 A.GaussianBlur(blur_limit=(3, 5), p=1.0),
                 A.MotionBlur(blur_limit=3, p=1.0),
             ], p=0.5),
 
-            # Advanced augmentations - FIXED parameter names
+            # Tăng cường nâng cao - SỬA tên tham số
             A.CoarseDropout(max_holes=8, max_height=int(img_size*0.1), max_width=int(img_size*0.1), fill_value=0, p=0.4),
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.3),
-            A.OpticalDistortion(distort_limit=0.3, p=0.3),  # Removed invalid shift_limit
+            A.OpticalDistortion(distort_limit=0.3, p=0.3),  # Đã xóa shift_limit không hợp lệ
 
-            # CLAHE for better contrast - USING CUSTOM IMPLEMENTATION
+            # CLAHE để tăng độ tương phản - SỬ DỤNG TRIỂN KHAI TÙY CHỈNH
             CustomCLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
 
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -185,26 +185,26 @@ def get_classification_transforms(is_train: bool = True, img_size: int = 256):
 
 
 def get_segmentation_transforms(is_train: bool = True, img_size: int = 256):
-    """Get augmentation transforms for segmentation - ENHANCED for tiny lesions"""
+    """Lấy các phép biến đổi tăng cường cho phân đoạn - TĂNG CƯỜNG cho các tổn thương nhỏ"""
 
     if is_train:
         transform = A.Compose([
             A.Resize(img_size, img_size),
-            # Geometric augmentations - moderate to preserve lesion locations
+            # Tăng cường hình học - vừa phải để bảo toàn vị trí tổn thương
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Rotate(limit=20, p=0.5),
             A.Affine(scale=(0.9, 1.1), translate_percent=(0.1, 0.1), rotate=(-15, 15), p=0.5),
 
-            # Color augmentations - important for DR images
+            # Tăng cường màu sắc - quan trọng cho ảnh DR
             A.RandomBrightnessContrast(brightness_limit=0.25, contrast_limit=0.25, p=0.6),
             A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=15, p=0.4),
             
-            # CLAHE for better contrast - USING CUSTOM IMPLEMENTATION
+            # CLAHE để tăng độ tương phản - SỬ DỤNG TRIỂN KHAI TÙY CHỈNH
             CustomCLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.5),
 
-            # Elastic deformation for medical images - FIXED parameter
-            A.ElasticTransform(alpha=1, sigma=50, p=0.3),  # Removed invalid alpha_affine
+            # Biến dạng đàn hồi cho ảnh y tế - ĐÃ SỬA tham số
+            A.ElasticTransform(alpha=1, sigma=50, p=0.3),  # Đã xóa alpha_affine không hợp lệ
             A.GridDistortion(num_steps=5, distort_limit=0.2, p=0.3),
 
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -221,7 +221,7 @@ def get_segmentation_transforms(is_train: bool = True, img_size: int = 256):
 
 
 def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_size: int = 256):
-    """Create data loaders for classification"""
+    """Tạo các data loader cho phân loại"""
 
     train_dataset = DRClassificationDataset(
         image_dir=config.CLASS_TRAIN_IMG_DIR,
@@ -230,7 +230,7 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         is_train=True
     )
 
-    # Check if test labels exist
+    # Kiểm tra xem nhãn test có tồn tại không
     if os.path.exists(config.CLASS_TEST_LABELS):
         test_dataset = DRClassificationDataset(
             image_dir=config.CLASS_TEST_IMG_DIR,
@@ -239,7 +239,7 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
             is_train=False
         )
     else:
-        # Use validation split from training data
+        # Sử dụng chia validation từ dữ liệu huấn luyện
         from sklearn.model_selection import train_test_split
         train_indices, val_indices = train_test_split(
             range(len(train_dataset)), test_size=0.2, random_state=config.SEED
@@ -249,7 +249,7 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         test_dataset = torch.utils.data.Subset(train_dataset, val_indices)
         train_dataset = train_dataset_split
 
-    # Detect if CUDA is available for pin_memory
+    # Phát hiện xem CUDA có khả dụng cho pin_memory không
     import torch
     use_pin_memory = torch.cuda.is_available()
 
@@ -258,7 +258,7 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
+        pin_memory=use_pin_memory  # Chỉ sử dụng pin_memory nếu CUDA khả dụng
     )
 
     test_loader = DataLoader(
@@ -266,14 +266,14 @@ def get_classification_loaders(batch_size: int = 4, num_workers: int = 2, img_si
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
+        pin_memory=use_pin_memory  # Chỉ sử dụng pin_memory nếu CUDA khả dụng
     )
 
     return train_loader, test_loader
 
 
 def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size: int = 256):
-    """Create data loaders for segmentation"""
+    """Tạo các data loader cho phân đoạn"""
 
     train_dataset = DRSegmentationDataset(
         image_dir=config.SEG_TRAIN_IMG_DIR,
@@ -281,7 +281,7 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
         transform=get_segmentation_transforms(is_train=True, img_size=img_size)
     )
 
-    # Use validation split
+    # Sử dụng chia validation
     from sklearn.model_selection import train_test_split
     train_indices, val_indices = train_test_split(
         range(len(train_dataset)), test_size=0.2, random_state=config.SEED
@@ -290,7 +290,7 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
     train_dataset_split = torch.utils.data.Subset(train_dataset, train_indices)
     val_dataset = torch.utils.data.Subset(train_dataset, val_indices)
 
-    # Detect if CUDA is available for pin_memory
+    # Phát hiện xem CUDA có khả dụng cho pin_memory không
     use_pin_memory = torch.cuda.is_available()
 
     train_loader = DataLoader(
@@ -298,7 +298,7 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
+        pin_memory=use_pin_memory  # Chỉ sử dụng pin_memory nếu CUDA khả dụng
     )
 
     val_loader = DataLoader(
@@ -306,7 +306,7 @@ def get_segmentation_loaders(batch_size: int = 4, num_workers: int = 2, img_size
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=use_pin_memory  # Only use pin_memory if CUDA available
+        pin_memory=use_pin_memory  # Chỉ sử dụng pin_memory nếu CUDA khả dụng
     )
 
     return train_loader, val_loader

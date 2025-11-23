@@ -1,141 +1,70 @@
 """
-Preprocessing module: Adaptive Gabor Filter with Chaotic Map + CLAHE
+Module tiền xử lý: CLAHE Enhancement cho phát hiện bệnh lý võng mạc tiểu đường
 """
 
 import cv2
 import numpy as np
 from typing import Tuple
 
-class ChebyshevChaoticMap:
-    """Chebyshev chaotic map for adaptive parameter tuning"""
-
-    def __init__(self, initial_value: float = 0.7, order: int = 5):
-        self.value = initial_value
-        self.order = order
-
-    def next(self) -> float:
-        """Generate next chaotic value using Chebyshev map"""
-        self.value = np.cos(self.order * np.arccos(self.value))
-        return self.value
-
-
-class AdaptiveGaborFilter:
-    """Adaptive Gabor Filter with Chaotic Map enhancement"""
-
-    def __init__(self, ksize: int = 31, sigma: float = 3.0, lambd: float = 10.0,
-                 gamma: float = 0.5, n_orientations: int = 8):
-        self.ksize = ksize
-        self.sigma = sigma
-        self.lambd = lambd
-        self.gamma = gamma
-        self.n_orientations = n_orientations
-        self.chaotic_map = ChebyshevChaoticMap()
-
-    def get_gabor_kernel(self, theta: float, chaotic_value: float) -> np.ndarray:
-        """Generate adaptive Gabor kernel with chaotic enhancement"""
-        # Add chaotic perturbation to theta
-        adaptive_theta = theta + chaotic_value * 0.1
-
-        # Create Gabor kernel
-        kernel = cv2.getGaborKernel(
-            ksize=(self.ksize, self.ksize),
-            sigma=self.sigma,
-            theta=adaptive_theta,
-            lambd=self.lambd,
-            gamma=self.gamma,
-            psi=0,
-            ktype=cv2.CV_32F
-        )
-
-        # Normalize
-        kernel = kernel / kernel.sum()
-        return kernel
-
-    def apply(self, image: np.ndarray) -> np.ndarray:
-        """Apply adaptive Gabor filtering to image"""
-        if len(image.shape) == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # Initialize output
-        filtered = np.zeros_like(image, dtype=np.float32)
-
-        # Apply Gabor filters with different orientations
-        for i in range(self.n_orientations):
-            theta = np.pi * i / self.n_orientations
-            chaotic_value = self.chaotic_map.next()
-
-            # Get adaptive kernel
-            kernel = self.get_gabor_kernel(theta, chaotic_value)
-
-            # Apply filter
-            response = cv2.filter2D(image, cv2.CV_32F, kernel)
-            filtered += np.abs(response)
-
-        # Normalize to [0, 255]
-        filtered = filtered / self.n_orientations
-        filtered = np.clip(filtered, 0, 255).astype(np.uint8)
-
-        return filtered
-
 
 class CLAHEEnhancer:
     """
-    Optimized Contrast Limited Adaptive Histogram Equalization
-    Custom implementation with performance optimizations
+    Contrast Limited Adaptive Histogram Equalization được tối ưu hóa
+    Triển khai tùy chỉnh với các tối ưu hóa hiệu suất
     """
 
     def __init__(self, clip_limit: float = 2.0, tile_grid_size: Tuple[int, int] = (8, 8)):
         """
-        Initialize CLAHE enhancer
+        Khởi tạo bộ tăng cường CLAHE
         
         Args:
-            clip_limit: Threshold for contrast limiting (2.0-4.0 recommended)
-            tile_grid_size: Size of grid for histogram equalization (8x8 default)
+            clip_limit: Ngưỡng giới hạn độ tương phản (khuyến nghị 2.0-4.0)
+            tile_grid_size: Kích thước lưới cho cân bằng histogram (mặc định 8x8)
         """
         self.clip_limit = clip_limit
         self.tile_grid_size = tile_grid_size
-        # Pre-create CLAHE object for better performance
+        # Tạo trước đối tượng CLAHE để tăng hiệu suất
         self.clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
 
     def apply(self, image: np.ndarray) -> np.ndarray:
         """
-        Apply CLAHE to enhance contrast
+        Áp dụng CLAHE để tăng cường độ tương phản
         
-        For color images: Converts to LAB and applies to L channel only
-        For grayscale: Applies directly
+        Đối với ảnh màu: Chuyển sang LAB và chỉ áp dụng cho kênh L
+        Đối với ảnh grayscale: Áp dụng trực tiếp
         
         Args:
-            image: Input image (BGR or grayscale)
+            image: Ảnh đầu vào (BGR hoặc grayscale)
             
         Returns:
-            Enhanced image with same shape and dtype as input
+            Ảnh đã tăng cường với cùng shape và dtype như đầu vào
         """
         if len(image.shape) == 3:
-            # Convert to LAB color space for better color preservation
+            # Chuyển sang không gian màu LAB để bảo toàn màu sắc tốt hơn
             lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
             
-            # Apply CLAHE only to L (luminance) channel
+            # Chỉ áp dụng CLAHE cho kênh L (độ sáng)
             lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
             
-            # Convert back to BGR
+            # Chuyển lại sang BGR
             enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
             return enhanced
         else:
-            # Direct application for grayscale
+            # Áp dụng trực tiếp cho ảnh grayscale
             return self.clahe.apply(image)
     
     def apply_rgb(self, image: np.ndarray) -> np.ndarray:
         """
-        Apply CLAHE to RGB image (assumes input is RGB, not BGR)
+        Áp dụng CLAHE cho ảnh RGB (giả định đầu vào là RGB, không phải BGR)
         
         Args:
-            image: Input RGB image
+            image: Ảnh RGB đầu vào
             
         Returns:
-            Enhanced RGB image
+            Ảnh RGB đã tăng cường
         """
         if len(image.shape) == 3:
-            # Convert RGB to LAB
+            # Chuyển RGB sang LAB
             lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
             lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
             enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
@@ -145,58 +74,45 @@ class CLAHEEnhancer:
 
 
 class ImagePreprocessor:
-    """Complete image preprocessing pipeline"""
+    """Pipeline tiền xử lý ảnh đơn giản với CLAHE"""
 
-    def __init__(self, target_size: int = 256):
+    def __init__(self, target_size: int = 256, clip_limit: float = 2.0):
         self.target_size = target_size
-        self.gabor_filter = AdaptiveGaborFilter()
-        self.clahe_enhancer = CLAHEEnhancer()
+        self.clahe_enhancer = CLAHEEnhancer(clip_limit=clip_limit)
 
-    def preprocess(self, image: np.ndarray, apply_gabor: bool = True) -> np.ndarray:
+    def preprocess(self, image: np.ndarray) -> np.ndarray:
         """
-        Complete preprocessing pipeline:
-        1. Resize
-        2. Adaptive Gabor filtering (optional, for denoising)
-        3. CLAHE contrast enhancement
+        Pipeline tiền xử lý:
+        1. Thay đổi kích thước
+        2. Tăng cường độ tương phản bằng CLAHE
         """
-        # Resize image
+        # Thay đổi kích thước ảnh
         image = cv2.resize(image, (self.target_size, self.target_size))
 
-        # Apply Gabor filter for denoising (optional)
-        if apply_gabor:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-            filtered = self.gabor_filter.apply(gray)
-            # Convert back to BGR
-            if len(image.shape) == 3:
-                image = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
-            else:
-                image = filtered
-
-        # Apply CLAHE for contrast enhancement
+        # Áp dụng CLAHE để tăng cường độ tương phản
         enhanced = self.clahe_enhancer.apply(image)
 
         return enhanced
 
     def normalize(self, image: np.ndarray) -> np.ndarray:
-        """Normalize image to [0, 1] range"""
+        """Chuẩn hóa ảnh về khoảng [0, 1]"""
         return image.astype(np.float32) / 255.0
 
 
 def preprocess_fundus_image(image_path: str, target_size: int = 256,
-                            apply_gabor: bool = False) -> np.ndarray:
+                            clip_limit: float = 2.0) -> np.ndarray:
     """
-    Convenience function to preprocess a fundus image from file
-    Note: Gabor filter is computationally expensive, set to False by default
+    Hàm tiện ích để tiền xử lý ảnh đáy mắt từ file
+    Áp dụng tăng cường CLAHE để cải thiện độ tương phản
     """
-    # Read image
+    # Đọc ảnh
     image = cv2.imread(image_path)
     if image is None:
-        raise ValueError(f"Cannot read image: {image_path}")
+        raise ValueError(f"Không thể đọc ảnh: {image_path}")
 
-    # Preprocess
-    preprocessor = ImagePreprocessor(target_size=target_size)
-    processed = preprocessor.preprocess(image, apply_gabor=apply_gabor)
+    # Tiền xử lý
+    preprocessor = ImagePreprocessor(target_size=target_size, clip_limit=clip_limit)
+    processed = preprocessor.preprocess(image)
     normalized = preprocessor.normalize(processed)
 
     return normalized
-

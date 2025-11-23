@@ -1,6 +1,6 @@
 """
-Visualize Preprocessing Steps
-Shows each step of preprocessing pipeline including HE, AHE, CLAHE, and Adaptive Gabor
+Visualize CLAHE Preprocessing
+Shows comparison between Original, Standard Histogram Equalization, and CLAHE
 Usage: python visualize_preprocessing.py --image <path_to_image>
 """
 
@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
-from preprocessing import AdaptiveGaborFilter, CLAHEEnhancer
+from preprocessing import CLAHEEnhancer
 
 
 def histogram_equalization(image):
@@ -36,15 +36,14 @@ def adaptive_histogram_equalization(image, clip_limit=40.0, tile_grid_size=(8, 8
         return clahe.apply(image)
 
 
-def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess'):
+def visualize_clahe_preprocessing(image_path, output_dir='outputs/preprocess'):
     """
-    Visualize all preprocessing steps:
+    Visualize CLAHE preprocessing with different clip limits:
     1. Original Image
     2. HE (Histogram Equalization)
-    3. AHE (Adaptive Histogram Equalization - high clip limit)
-    4. CLAHE (Contrast Limited AHE - clip limit = 2.0)
-    5. Adaptive Gabor Filter
-    6. Gabor + CLAHE (Full Pipeline)
+    3. AHE (Adaptive HE - clip limit = 40.0)
+    4. CLAHE (clip limit = 2.0) - Used in training
+    5. CLAHE (clip limit = 4.0) - Alternative
     """
 
     # Create output directory
@@ -59,7 +58,7 @@ def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess
     # Resize for consistency
     image = cv2.resize(image, (512, 512))
 
-    print("Applying preprocessing steps...")
+    print("Applying CLAHE preprocessing...")
 
     # Step 1: Original
     original = image.copy()
@@ -69,42 +68,40 @@ def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess
     he_result = histogram_equalization(image.copy())
 
     # Step 3: AHE (Adaptive Histogram Equalization with high clip limit)
-    print("  - Adaptive Histogram Equalization (AHE)...")
+    print("  - Adaptive Histogram Equalization (AHE, clip=40)...")
     ahe_result = adaptive_histogram_equalization(image.copy(), clip_limit=40.0)
 
-    # Step 4: CLAHE (Contrast Limited AHE with clip limit = 2.0)
-    print("  - CLAHE (Contrast Limited AHE)...")
-    clahe_enhancer = CLAHEEnhancer(clip_limit=2.0, tile_grid_size=(8, 8))
-    clahe_result = clahe_enhancer.apply(image.copy())
+    # Step 4: CLAHE (clip limit = 2.0) - Default
+    print("  - CLAHE (clip=2.0) - Default...")
+    clahe_2 = CLAHEEnhancer(clip_limit=2.0, tile_grid_size=(8, 8))
+    clahe_2_result = clahe_2.apply(image.copy())
 
-    # Step 5: Adaptive Gabor Filter
-    print("  - Adaptive Gabor Filter...")
-    gabor_filter = AdaptiveGaborFilter(ksize=31, sigma=3.0, lambd=10.0, gamma=0.5, n_orientations=8)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gabor_result = gabor_filter.apply(gray)
-    gabor_result_bgr = cv2.cvtColor(gabor_result, cv2.COLOR_GRAY2BGR)
-
-    # Step 6: Gabor + CLAHE (Full pipeline)
-    print("  - Gabor + CLAHE (Full Pipeline)...")
-    gabor_clahe = clahe_enhancer.apply(gabor_result_bgr)
+    # Step 5: CLAHE (clip limit = 4.0) - Used in training
+    print("  - CLAHE (clip=4.0) - Used in Training...")
+    clahe_4 = CLAHEEnhancer(clip_limit=4.0, tile_grid_size=(8, 8))
+    clahe_4_result = clahe_4.apply(image.copy())
 
     # Create comprehensive visualization
     fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    fig.suptitle('Preprocessing Steps Visualization', fontsize=20, fontweight='bold')
+    fig.suptitle('CLAHE Preprocessing Comparison', fontsize=20, fontweight='bold')
 
     images = [
         (original, 'Original Image'),
         (he_result, 'HE (Histogram Equalization)'),
-        (ahe_result, 'AHE (Adaptive HE, clip=40)'),
-        (clahe_result, 'CLAHE (clip=2.0)'),
-        (gabor_result_bgr, 'Adaptive Gabor Filter'),
-        (gabor_clahe, 'Gabor + CLAHE (Full Pipeline)')
+        (ahe_result, 'AHE (clip=40.0)'),
+        (clahe_2_result, 'CLAHE (clip=2.0)'),
+        (clahe_4_result, 'CLAHE (clip=4.0) ⭐ Training'),
+        (np.zeros_like(original), '')  # Empty placeholder
     ]
 
     for idx, (img, title) in enumerate(images):
         row = idx // 3
         col = idx % 3
         ax = axes[row, col]
+
+        if idx == 5:  # Empty placeholder
+            ax.axis('off')
+            continue
 
         # Convert BGR to RGB for display
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -116,26 +113,18 @@ def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess
 
     # Save comprehensive visualization
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    output_path = os.path.join(output_dir, f'{image_name}_all_steps.png')
+    output_path = os.path.join(output_dir, f'{image_name}_clahe_comparison.png')
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"\n✓ Saved comprehensive visualization: {output_path}")
+    print(f"\n✓ Saved CLAHE comparison: {output_path}")
 
-    # Save individual images
-    print("\nSaving individual processed images...")
-    for img, title in images:
-        safe_title = title.replace(' ', '_').replace('(', '').replace(')', '').replace(',', '').replace('=', '')
-        individual_path = os.path.join(output_dir, f'{image_name}_{safe_title}.png')
-        cv2.imwrite(individual_path, img)
-        print(f"  ✓ {safe_title}")
-
-    # Create side-by-side comparison: Original vs CLAHE vs Gabor+CLAHE
+    # Create side-by-side comparison: Original vs CLAHE variations
     fig2, axes2 = plt.subplots(1, 3, figsize=(18, 6))
-    fig2.suptitle('Key Preprocessing Comparison', fontsize=18, fontweight='bold')
+    fig2.suptitle('CLAHE Enhancement Levels', fontsize=18, fontweight='bold')
 
     key_images = [
         (original, 'Original'),
-        (clahe_result, 'CLAHE Only'),
-        (gabor_clahe, 'Adaptive Gabor + CLAHE')
+        (clahe_2_result, 'CLAHE (clip=2.0)\\nSubtle Enhancement'),
+        (clahe_4_result, 'CLAHE (clip=4.0)\\n⭐ Training Pipeline')
     ]
 
     for idx, (img, title) in enumerate(key_images):
@@ -145,15 +134,15 @@ def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess
         axes2[idx].axis('off')
 
     plt.tight_layout()
-    comparison_path = os.path.join(output_dir, f'{image_name}_comparison.png')
+    comparison_path = os.path.join(output_dir, f'{image_name}_clahe_levels.png')
     plt.savefig(comparison_path, dpi=150, bbox_inches='tight')
-    print(f"\n✓ Saved key comparison: {comparison_path}")
+    print(f"✓ Saved CLAHE levels comparison: {comparison_path}")
 
     # Create histogram comparison
     fig3, axes3 = plt.subplots(2, 3, figsize=(18, 10))
-    fig3.suptitle('Histogram Analysis', fontsize=18, fontweight='bold')
+    fig3.suptitle('Histogram Analysis - CLAHE Effects', fontsize=18, fontweight='bold')
 
-    for idx, (img, title) in enumerate(images):
+    for idx, (img, title) in enumerate(images[:5]):  # Skip empty placeholder
         row = idx // 3
         col = idx % 3
         ax = axes3[row, col]
@@ -170,27 +159,29 @@ def visualize_all_preprocessing_steps(image_path, output_dir='outputs/preprocess
         ax.set_xlim([0, 256])
         ax.grid(True, alpha=0.3)
 
+    # Remove last subplot
+    fig3.delaxes(axes3[1, 2])
+
     plt.tight_layout()
-    histogram_path = os.path.join(output_dir, f'{image_name}_histograms.png')
+    histogram_path = os.path.join(output_dir, f'{image_name}_clahe_histograms.png')
     plt.savefig(histogram_path, dpi=150, bbox_inches='tight')
     print(f"✓ Saved histogram analysis: {histogram_path}")
 
     print(f"\n{'='*80}")
-    print(f"✅ ALL VISUALIZATIONS COMPLETED!")
+    print(f"✅ CLAHE VISUALIZATION COMPLETED!")
     print(f"{'='*80}")
     print(f"\nOutput directory: {output_dir}")
     print(f"Files created:")
-    print(f"  1. {image_name}_all_steps.png - All 6 preprocessing steps")
-    print(f"  2. {image_name}_comparison.png - Key 3-way comparison")
-    print(f"  3. {image_name}_histograms.png - Histogram analysis")
-    print(f"  4. Individual images for each step")
+    print(f"  1. {image_name}_clahe_comparison.png - All CLAHE variations")
+    print(f"  2. {image_name}_clahe_levels.png - Key comparison")
+    print(f"  3. {image_name}_clahe_histograms.png - Histogram analysis")
     print(f"{'='*80}\n")
 
     plt.show()
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Visualize preprocessing steps')
+    parser = argparse.ArgumentParser(description='Visualize CLAHE preprocessing')
     parser.add_argument('--image', type=str, required=True, help='Path to input image')
     parser.add_argument('--output', type=str, default='outputs/preprocess',
                        help='Output directory (default: outputs/preprocess)')
@@ -198,10 +189,10 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "="*80)
-    print("🔍 PREPROCESSING VISUALIZATION")
+    print("🔍 CLAHE PREPROCESSING VISUALIZATION")
     print("="*80 + "\n")
 
-    visualize_all_preprocessing_steps(args.image, args.output)
+    visualize_clahe_preprocessing(args.image, args.output)
 
 
 if __name__ == "__main__":

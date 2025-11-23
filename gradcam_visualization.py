@@ -1,6 +1,6 @@
 """
-Grad-CAM Visualization for DR Classification Model
-Helps explain which regions the model focuses on
+Trực quan hóa Grad-CAM cho Mô hình Phân loại DR
+Giúp giải thích các vùng mà mô hình tập trung vào
 """
 
 import torch
@@ -13,13 +13,13 @@ import os
 
 
 class GradCAM:
-    """Gradient-weighted Class Activation Mapping"""
+    """Ánh xạ Kích hoạt Lớp có Trọng số Gradient"""
 
     def __init__(self, model, target_layer):
         """
         Args:
-            model: trained classification model
-            target_layer: layer to compute gradients (usually last conv layer)
+            model: mô hình phân loại đã huấn luyện
+            target_layer: lớp để tính gradient (thường là lớp conv cuối)
         """
         self.model = model
         self.target_layer = target_layer
@@ -31,50 +31,50 @@ class GradCAM:
         self.target_layer.register_backward_hook(self.save_gradient)
 
     def save_activation(self, module, input, output):
-        """Hook to save forward activations"""
+        """Hook để lưu activations lan truyền tiến"""
         self.activations = output.detach()
 
     def save_gradient(self, module, grad_input, grad_output):
-        """Hook to save backward gradients"""
+        """Hook để lưu gradients lan truyền ngược"""
         self.gradients = grad_output[0].detach()
 
     def generate_cam(self, input_image, target_class=None):
         """
-        Generate CAM for input image
+        Tạo CAM cho ảnh đầu vào
 
         Args:
-            input_image: preprocessed image tensor [1, 3, H, W]
-            target_class: class to generate CAM for (None = predicted class)
+            input_image: tensor ảnh đã tiền xử lý [1, 3, H, W]
+            target_class: lớp để tạo CAM (None = lớp được dự đoán)
 
         Returns:
-            cam: Class activation map [H, W]
+            cam: Bản đồ kích hoạt lớp [H, W]
         """
         self.model.eval()
 
-        # Forward pass
+        # Lan truyền tiến
         output = self.model(input_image)
 
         if target_class is None:
             target_class = output.argmax(dim=1).item()
 
-        # Backward pass
+        # Lan truyền ngược
         self.model.zero_grad()
         class_score = output[0, target_class]
         class_score.backward()
 
-        # Generate CAM
+        # Tạo CAM
         gradients = self.gradients[0]  # [C, H, W]
         activations = self.activations[0]  # [C, H, W]
 
-        # Global average pooling of gradients
+        # Global average pooling của gradients
         weights = gradients.mean(dim=(1, 2))  # [C]
 
-        # Weighted sum of activations
+        # Tổng có trọng số của activations
         cam = torch.zeros(activations.shape[1:], dtype=torch.float32)
         for i, w in enumerate(weights):
             cam += w * activations[i]
 
-        # Apply ReLU and normalize
+        # Áp dụng ReLU và chuẩn hóa
         cam = F.relu(cam)
         cam = cam - cam.min()
         cam = cam / (cam.max() + 1e-8)
@@ -83,25 +83,25 @@ class GradCAM:
 
     def visualize(self, original_image, cam, alpha=0.4):
         """
-        Overlay CAM on original image
+        Phủ CAM lên ảnh gốc
 
         Args:
-            original_image: original image [H, W, 3] in RGB, range [0, 255]
-            cam: class activation map [H, W]
-            alpha: overlay transparency
+            original_image: ảnh gốc [H, W, 3] ở RGB, phạm vi [0, 255]
+            cam: bản đồ kích hoạt lớp [H, W]
+            alpha: độ trong suốt phủ
 
         Returns:
-            overlayed image
+            ảnh đã phủ
         """
-        # Resize CAM to match original image
+        # Thay đổi kích thước CAM để khớp với ảnh gốc
         h, w = original_image.shape[:2]
         cam_resized = cv2.resize(cam, (w, h))
 
-        # Convert to heatmap
+        # Chuyển thành heatmap
         heatmap = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
         heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
 
-        # Overlay
+        # Phủ lên
         overlayed = heatmap * alpha + original_image * (1 - alpha)
         overlayed = np.uint8(overlayed)
 
@@ -112,19 +112,19 @@ def visualize_predictions_with_gradcam(model, image_path, device,
                                        class_names=['No DR', 'Mild', 'Moderate', 'Severe', 'Proliferative'],
                                        save_path=None):
     """
-    Complete visualization with GradCAM
+    Trực quan hóa hoàn chỉnh với GradCAM
 
     Args:
-        model: trained model
-        image_path: path to input image
-        device: torch device
-        class_names: list of class names
-        save_path: path to save visualization
+        model: mô hình đã huấn luyện
+        image_path: đường dẫn đến ảnh đầu vào
+        device: thiết bị torch
+        class_names: danh sách tên lớp
+        save_path: đường dẫn để lưu trực quan hóa
     """
     from dataset import get_classification_transforms
     from PIL import Image
 
-    # Load and preprocess image
+    # Tải và tiền xử lý ảnh
     original_image = cv2.imread(image_path)
     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
@@ -208,14 +208,14 @@ def visualize_predictions_with_gradcam(model, image_path, device,
 
 def batch_visualize_gradcam(model, image_dir, device, output_dir, num_samples=10):
     """
-    Generate GradCAM visualizations for multiple images
+    Tạo trực quan hóa GradCAM cho nhiều ảnh
 
     Args:
-        model: trained model
-        image_dir: directory containing images
-        device: torch device
-        output_dir: directory to save visualizations
-        num_samples: number of images to visualize
+        model: mô hình đã huấn luyện
+        image_dir: thư mục chứa ảnh
+        device: thiết bị torch
+        output_dir: thư mục để lưu trực quan hóa
+        num_samples: số lượng ảnh để trực quan hóa
     """
     import glob
     import random
@@ -250,11 +250,11 @@ def batch_visualize_gradcam(model, image_dir, device, output_dir, num_samples=10
 
 
 if __name__ == "__main__":
-    """Example usage"""
+    """Ví dụ sử dụng"""
     import torch
     from classification_model import create_classification_model
 
-    # Load model
+    # Tải mô hình
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = create_classification_model(num_classes=5, pretrained=False)
     model.load_state_dict(torch.load('outputs/models/best_model.pth', map_location=device))

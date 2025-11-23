@@ -1,6 +1,6 @@
 """
-SANGO (Self-Adaptive Northern Goshawk Optimization) Algorithm
-Implementation based on the paper's methodology
+SANGO (Tối ưu hóa Northern Goshawk Tự thích nghi)
+Triển khai dựa trên phương pháp luận của bài báo
 """
 
 import numpy as np
@@ -11,8 +11,8 @@ import torch.nn as nn
 
 class SANGOOptimizer:
     """
-    Self-Adaptive Northern Goshawk Optimization Algorithm
-    Used for optimizing GRU hyperparameters
+    Thuật toán Tối ưu hóa Northern Goshawk Tự thích nghi
+    Sử dụng để tối ưu hóa siêu tham số GRU
     """
 
     def __init__(self,
@@ -24,16 +24,16 @@ class SANGOOptimizer:
                  alpha: float = 2.0,
                  beta: float = 1.5):
         """
-        Initialize SANGO optimizer
+        Khởi tạo bộ tối ưu SANGO
 
         Args:
-            objective_function: Function to minimize (e.g., validation loss)
-            dim: Dimension of search space
-            bounds: List of (min, max) tuples for each dimension
-            population_size: Number of solutions in population
-            max_iterations: Maximum number of iterations
-            alpha: Self-adaptive parameter
-            beta: Exploration parameter
+            objective_function: Hàm để tối thiểu hóa (vd: validation loss)
+            dim: Số chiều của không gian tìm kiếm
+            bounds: Danh sách các tuple (min, max) cho mỗi chiều
+            population_size: Số lượng giải pháp trong quần thể
+            max_iterations: Số lần lặp tối đa
+            alpha: Tham số tự thích nghi
+            beta: Tham số khám phá
         """
         self.objective_function = objective_function
         self.dim = dim
@@ -43,7 +43,7 @@ class SANGOOptimizer:
         self.alpha = alpha
         self.beta = beta
 
-        # Initialize population
+        # Khởi tạo quần thể
         self.population = self._initialize_population()
         self.fitness = np.zeros(population_size)
         self.best_solution = None
@@ -51,7 +51,7 @@ class SANGOOptimizer:
         self.convergence_curve = []
 
     def _initialize_population(self) -> np.ndarray:
-        """Initialize population randomly within bounds"""
+        """Khởi tạo quần thể ngẫu nhiên trong giới hạn"""
         population = np.zeros((self.population_size, self.dim))
         for i in range(self.dim):
             population[:, i] = np.random.uniform(
@@ -62,17 +62,17 @@ class SANGOOptimizer:
         return population
 
     def _evaluate_fitness(self) -> None:
-        """Evaluate fitness for all solutions"""
+        """Đánh giá fitness cho tất cả các giải pháp"""
         for i in range(self.population_size):
             self.fitness[i] = self.objective_function(self.population[i])
 
-            # Update best solution
+            # Cập nhật giải pháp tốt nhất
             if self.fitness[i] < self.best_fitness:
                 self.best_fitness = self.fitness[i]
                 self.best_solution = self.population[i].copy()
 
     def _levy_flight(self, Lambda: float = 1.5) -> np.ndarray:
-        """Generate Levy flight random walk"""
+        """Tạo bước đi ngẫu nhiên Levy flight"""
         import math
 
         sigma = (
@@ -87,60 +87,60 @@ class SANGOOptimizer:
         return step
 
     def _update_position(self, position: np.ndarray, iteration: int) -> np.ndarray:
-        """Update position using Northern Goshawk hunting strategy"""
-        # Self-adaptive parameter
+        """Cập nhật vị trí sử dụng chiến lược săn mồi Northern Goshawk"""
+        # Tham số tự thích nghi
         r = self.alpha * (1 - iteration / self.max_iterations)
 
-        # Random parameters
+        # Tham số ngẫu nhiên
         r1 = np.random.rand()
         r2 = np.random.rand()
 
-        # Choose random solution from population
+        # Chọn giải pháp ngẫu nhiên từ quần thể
         random_idx = np.random.randint(0, self.population_size)
         random_solution = self.population[random_idx]
 
-        # Northern Goshawk hunting behavior
+        # Hành vi săn mồi của Northern Goshawk
         if r1 < 0.5:
-            # Exploitation: Attack prey (best solution)
+            # Khai thác: Tấn công con mồi (giải pháp tốt nhất)
             levy = self._levy_flight()
             new_position = self.best_solution + r * levy * (self.best_solution - position)
         else:
-            # Exploration: Search for prey
+            # Khám phá: Tìm kiếm con mồi
             new_position = random_solution + self.beta * r2 * (random_solution - position)
 
-        # Apply bounds
+        # Áp dụng giới hạn
         new_position = np.clip(new_position, self.bounds[:, 0], self.bounds[:, 1])
 
         return new_position
 
     def optimize(self, verbose: bool = True) -> Tuple[np.ndarray, float]:
         """
-        Run SANGO optimization
+        Chạy tối ưu hóa SANGO
 
         Returns:
-            best_solution: Optimal parameters found
-            best_fitness: Best fitness value
+            best_solution: Tham số tối ưu tìm được
+            best_fitness: Giá trị fitness tốt nhất
         """
-        # Initial evaluation
+        # Đánh giá ban đầu
         self._evaluate_fitness()
         self.convergence_curve.append(self.best_fitness)
 
         if verbose:
             print(f"Iteration 0: Best Fitness = {self.best_fitness:.6f}")
 
-        # Main optimization loop
+        # Vòng lặp tối ưu hóa chính
         for iteration in range(1, self.max_iterations + 1):
-            # Update each solution
+            # Cập nhật từng giải pháp
             for i in range(self.population_size):
                 new_position = self._update_position(self.population[i], iteration)
                 new_fitness = self.objective_function(new_position)
 
-                # Greedy selection
+                # Lựa chọn tham lam
                 if new_fitness < self.fitness[i]:
                     self.population[i] = new_position
                     self.fitness[i] = new_fitness
 
-                    # Update global best
+                    # Cập nhật giải pháp tốt nhất toàn cục
                     if new_fitness < self.best_fitness:
                         self.best_fitness = new_fitness
                         self.best_solution = new_position.copy()
@@ -155,7 +155,7 @@ class SANGOOptimizer:
 
 class OptimizedGRU(nn.Module):
     """
-    Optimized GRU with parameters tuned by SANGO
+    GRU tối ưu hóa với tham số được điều chỉnh bởi SANGO
     """
 
     def __init__(self,
@@ -169,24 +169,24 @@ class OptimizedGRU(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
 
-        # GRU layers
+        # Các lớp GRU
         self.gru = nn.GRU(
             input_size=input_size,
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
             batch_first=True,
-            bidirectional=True  # Bidirectional for better feature learning
+            bidirectional=True  # Hai chiều để học đặc trưng tốt hơn
         )
 
-        # Attention mechanism
+        # Cơ chế attention
         self.attention = nn.Sequential(
             nn.Linear(hidden_size * 2, hidden_size),
             nn.Tanh(),
             nn.Linear(hidden_size, 1)
         )
 
-        # Classification head
+        # Đầu phân loại
         self.classifier = nn.Sequential(
             nn.Linear(hidden_size * 2, hidden_size),
             nn.ReLU(),
@@ -196,25 +196,25 @@ class OptimizedGRU(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass with attention mechanism
+        Lan truyền tiến với cơ chế attention
 
         Args:
-            x: Input tensor of shape (batch, seq_len, input_size)
+            x: Tensor đầu vào có shape (batch, seq_len, input_size)
 
         Returns:
-            Output logits of shape (batch, num_classes)
+            Logits đầu ra có shape (batch, num_classes)
         """
-        # GRU forward
+        # GRU tiến
         gru_out, _ = self.gru(x)  # (batch, seq_len, hidden_size*2)
 
-        # Attention weights
+        # Trọng số attention
         attention_weights = self.attention(gru_out)  # (batch, seq_len, 1)
         attention_weights = torch.softmax(attention_weights, dim=1)
 
-        # Apply attention
+        # Áp dụng attention
         context = torch.sum(gru_out * attention_weights, dim=1)  # (batch, hidden_size*2)
 
-        # Classification
+        # Phân loại
         output = self.classifier(context)  # (batch, num_classes)
 
         return output
@@ -225,7 +225,7 @@ def create_optimized_gru(input_size: int,
                         hidden_size: int = 128,
                         num_layers: int = 2,
                         dropout: float = 0.3) -> OptimizedGRU:
-    """Factory function to create OptimizedGRU model"""
+    """Hàm factory để tạo mô hình OptimizedGRU"""
     return OptimizedGRU(
         input_size=input_size,
         hidden_size=hidden_size,

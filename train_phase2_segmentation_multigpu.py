@@ -1,8 +1,8 @@
 """
-PHASE 2: SEGMENTATION TRAINING - MULTI-GPU VERSION
+GIAI ĐOẠN 2: HUẤN LUYỆN PHÂN ĐOẠN - PHIÊN BẢN ĐA GPU
 Sử dụng 2x T4 GPU trên Kaggle để train với cấu hình cao
 
-Usage trong Kaggle:
+Cách sử dụng trong Kaggle:
     !python train_phase2_segmentation_multigpu.py
 """
 
@@ -26,25 +26,25 @@ from advanced_segmentation_model import create_advanced_segmentation_model, crea
 
 def calculate_metrics(pred, target, smooth=1e-6):
     """
-    Calculate IoU and Dice metrics for segmentation
+    Tính toán metrics IoU và Dice cho phân đoạn
 
     Args:
-        pred: predicted masks [B, C, H, W] (binary 0/1)
-        target: ground truth masks [B, C, H, W] (0/1)
-        smooth: smoothing factor
+        pred: masks dự đoán [B, C, H, W] (nhị phân 0/1)
+        target: masks ground truth [B, C, H, W] (0/1)
+        smooth: hệ số làm mượt
 
     Returns:
         iou: Intersection over Union
-        dice: Dice coefficient
+        dice: Hệ số Dice
     """
     pred = pred.float()
     target = target.float()
 
-    # Flatten
+    # Làm phẳng
     pred_flat = pred.view(-1)
     target_flat = target.view(-1)
 
-    # Calculate intersection and union
+    # Tính giao và hợp
     intersection = (pred_flat * target_flat).sum()
     union = pred_flat.sum() + target_flat.sum() - intersection
 
@@ -59,45 +59,44 @@ def calculate_metrics(pred, target, smooth=1e-6):
 
 def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device='cuda'):
     """
-    Multi-GPU segmentation training
+    Huấn luyện phân đoạn đa GPU
 
     Với 2x T4 GPU:
     - Batch size: 4 → 8 (mỗi GPU 4)
     - Image size: 1024 (giữ nguyên)
-    - Model: Attention U-Net (full version)
+    - Model: Attention U-Net (phiên bản đầy đủ)
     """
 
     print("\n" + "="*80)
-    print("🎯 PHASE 2: SEGMENTATION TRAINING (MULTI-GPU)")
+    print("GIAI ĐOẠN 2: HUẤN LUYỆN PHÂN ĐOẠN (ĐA GPU)")
     print("="*80)
-    print(f"⚡ Using 2x T4 GPU for HIGH-RESOLUTION training")
-    print(f"Target: IoU >0.40, Dice >0.50")
-    print(f"Epochs: {epochs} | Batch Size: {batch_size} | Image Size: {img_size}")
+    print(f"Sử dụng 2x T4 GPU cho huấn luyện ĐỘ PHÂN GIẢI CAO")
+    print(f"Epochs: {epochs} | Batch Size: {batch_size} | Kích thước Ảnh: {img_size}")
     print("="*80 + "\n")
 
-    # Check available GPUs
+    # Kiểm tra GPU khả dụng
     if not torch.cuda.is_available():
-        print("❌ ERROR: No GPU available!")
+        print("LỖI: Không có GPU khả dụng!")
         return None, None, None
 
     num_gpus = torch.cuda.device_count()
-    print(f"🎮 Detected {num_gpus} GPU(s):")
+    print(f"Detected {num_gpus} GPU(s):")
     for i in range(num_gpus):
         print(f"   GPU {i}: {torch.cuda.get_device_name(i)}")
         print(f"   VRAM: {torch.cuda.get_device_properties(i).total_memory / 1e9:.1f} GB")
     print()
 
     if num_gpus < 2:
-        print("⚠️  WARNING: Only 1 GPU detected. Multi-GPU training disabled.")
-        print("   Consider using train_phase2_segmentation_lite.py instead.")
+        print("WARNING: Only 1 GPU detected. Multi-GPU training disabled.")
+        print("Consider using train_phase2_segmentation_lite.py instead.")
         use_multigpu = False
     else:
-        print(f"✅ Multi-GPU training enabled with {num_gpus} GPUs!")
+        print(f"Multi-GPU training enabled with {num_gpus} GPUs!")
         use_multigpu = True
     print()
 
     # Memory cleanup
-    print("🧹 Cleaning memory...")
+    print("Cleaning memory...")
     gc.collect()
     for i in range(num_gpus):
         with torch.cuda.device(i):
@@ -127,7 +126,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
     print(f"✓ Val batches: {len(val_loader)}\n")
 
     # Create FULL Attention U-Net model
-    print("Creating Attention U-Net model (FULL VERSION)...")
+    print("Creating Attention U-Net model...")
     model = create_advanced_segmentation_model(
         in_channels=3,
         out_channels=3,
@@ -136,7 +135,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
 
     # Wrap model with DataParallel for multi-GPU
     if use_multigpu and num_gpus > 1:
-        print(f"🔗 Wrapping model with DataParallel ({num_gpus} GPUs)...")
+        print(f"Wrapping model with DataParallel ({num_gpus} GPUs)...")
         model = DataParallel(model, device_ids=list(range(num_gpus)))
         print(f"✓ Model will use GPUs: {list(range(num_gpus))}")
 
@@ -190,7 +189,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
     }
 
     print("="*80)
-    print("🚀 Starting Multi-GPU Training...")
+    print("Starting Phase 2 with Multi-GPU Training...")
     print("="*80 + "\n")
 
     start_time = time.time()
@@ -292,17 +291,17 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
                 'best_dice': best_dice,
                 'num_gpus': num_gpus,
             }, 'outputs/models/best_seg_model.pth')  # ✅ SỬA TÊN FILE CHO KHỚP
-            print(f"✅ Best model saved! (IoU: {best_iou:.4f}, Dice: {best_dice:.4f})")
+            print(f"Best model saved! (IoU: {best_iou:.4f}, Dice: {best_dice:.4f})")
             patience = 0
         else:
             patience += 1
-            print(f"⏳ Patience: {patience}/{max_patience}")
+            print(f"Patience: {patience}/{max_patience}")
 
         print(f"{'='*80}\n")
 
         # GPU Memory info
         if (epoch + 1) % 5 == 0:
-            print("💾 GPU Memory Usage:")
+            print("GPU Memory Usage:")
             for i in range(num_gpus):
                 allocated = torch.cuda.memory_allocated(i) / 1e9
                 reserved = torch.cuda.memory_reserved(i) / 1e9
@@ -311,7 +310,7 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
 
         # Early stopping
         if patience >= max_patience:
-            print(f"\n⚠️  Early stopping triggered after {epoch+1} epochs")
+            print(f"\nEarly stopping triggered after {epoch+1} epochs")
             print(f"Best IoU: {best_iou:.4f}, Best Dice: {best_dice:.4f}")
             break
 
@@ -336,13 +335,13 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
 
     # Final Summary
     print("\n" + "="*80)
-    print("✅ PHASE 2: SEGMENTATION TRAINING COMPLETED!")
+    print("PHASE 2: SEGMENTATION TRAINING COMPLETED!")
     print("="*80)
-    print(f"📊 Best IoU:  {best_iou:.4f}")
-    print(f"📊 Best Dice: {best_dice:.4f}")
-    print(f"⏱️  Training Time: {training_time:.1f} minutes")
-    print(f"🎮 Used {num_gpus} GPU(s)")
-    print(f"💾 Model saved: outputs/models/best_seg_model.pth")
+    print(f"Best IoU:  {best_iou:.4f}")
+    print(f"Best Dice: {best_dice:.4f}")
+    print(f"Training Time: {training_time:.1f} minutes")
+    print(f"Used {num_gpus} GPU(s)")
+    print(f"Model saved: outputs/models/best_seg_model.pth")
     print("="*80 + "\n")
 
     # Plot training curves
@@ -369,26 +368,26 @@ def train_segmentation_multigpu(epochs=100, batch_size=4, img_size=1024, device=
 
         plt.tight_layout()
         plt.savefig('outputs/logs/segmentation_training_curves_multigpu.png', dpi=150, bbox_inches='tight')
-        print("📈 Training curves saved: outputs/logs/segmentation_training_curves_multigpu.png\n")
+        print("Training curves saved: outputs/logs/segmentation_training_curves_multigpu.png\n")
     except Exception as e:
-        print(f"⚠️  Could not save plots: {e}\n")
+        print(f"Could not save plots: {e}\n")
 
     return best_iou, best_dice, history
 
 
 if __name__ == '__main__':
     print("\n" + "="*80)
-    print("🚀 DIABETIC RETINOPATHY - PHASE 2: SEGMENTATION (MULTI-GPU)")
+    print("DIABETIC RETINOPATHY - PHASE 2: SEGMENTATION (MULTI-GPU)")
     print("="*80)
-    print(f"📅 Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Check GPUs
     if not torch.cuda.is_available():
-        print("❌ ERROR: No GPU available!")
+        print("ERROR: No GPU available!")
         exit(1)
 
     num_gpus = torch.cuda.device_count()
-    print(f"🎮 Available GPUs: {num_gpus}")
+    print(f"Available GPUs: {num_gpus}")
 
     for i in range(num_gpus):
         print(f"   GPU {i}: {torch.cuda.get_device_name(i)}")
@@ -403,7 +402,7 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(42)  # Seed all GPUs
 
     # Memory cleanup
-    print("🧹 Initial memory cleanup...")
+    print("Initial memory cleanup...")
     gc.collect()
     for i in range(num_gpus):
         with torch.cuda.device(i):
@@ -430,9 +429,9 @@ if __name__ == '__main__':
     )
 
     print("\n" + "="*80)
-    print("🎉 ALL PHASES COMPLETE!")
+    print("ALL PHASES COMPLETE!")
     print("="*80)
     print("Both models trained successfully:")
-    print("  ✅ Classification model: outputs/models/best_classification_model.pth")
-    print("  ✅ Segmentation model:   outputs/models/best_seg_model.pth")  # ✅ SỬA TÊN
+    print("Classification model: outputs/models/best_classification_model.pth")
+    print("Segmentation model:   outputs/models/best_seg_model.pth")
     print("="*80 + "\n")
