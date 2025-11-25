@@ -23,10 +23,6 @@ from advanced_segmentation_model import create_advanced_segmentation_model
 
 
 def preprocess_for_segmentation(image_path, target_size=512):
-    """
-    ⚠️ QUAN TRỌNG: Phải khớp với tiền xử lý huấn luyện!
-    Huấn luyện sử dụng chuẩn hóa ImageNet, nên suy luận CŨNG PHẢI dùng nó!
-    """
     # Đọc ảnh
     image = cv2.imread(image_path)
     if image is None:
@@ -37,7 +33,6 @@ def preprocess_for_segmentation(image_path, target_size=512):
     # Áp dụng cùng phép biến đổi như huấn luyện (KHÔNG tăng cường)
     transform = A.Compose([
         A.Resize(target_size, target_size),
-        # ✅ QUAN TRỌNG: Chuẩn hóa giống như huấn luyện!
         A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2()
     ])
@@ -92,13 +87,13 @@ class DRPredictor:
         """Dự đoán cho 1 ảnh"""
 
         print(f"\n{'='*80}")
-        print(f"🔍 Analyzing: {os.path.basename(image_path)}")
+        print(f"Analyzing: {os.path.basename(image_path)}")
         print(f"{'='*80}")
 
         # Tải ảnh gốc
         image = cv2.imread(image_path)
         if image is None:
-            print(f"❌ Cannot load image: {image_path}")
+            print(f"Cannot load image: {image_path}")
             return
 
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -109,9 +104,9 @@ class DRPredictor:
         all_probs = None
 
         if self.class_model is not None:
-            print("\n📊 Classification:")
+            print("\nClassification:")
             try:
-                processed = preprocess_fundus_image(image_path, target_size=config.IMG_SIZE, apply_gabor=False)
+                processed = preprocess_fundus_image(image_path, target_size=config.IMG_SIZE)
                 image_tensor = torch.from_numpy(processed).permute(2, 0, 1).unsqueeze(0).to(self.device)
 
                 with torch.no_grad():
@@ -127,14 +122,14 @@ class DRPredictor:
                 for i, (grade, prob) in enumerate(zip(self.dr_grades, all_probs)):
                     print(f"      {grade:20s}: {prob*100:5.2f}%")
             except Exception as e:
-                print(f"   ❌ Lỗi trong quá trình phân loại: {e}")
+                print(f"Lỗi trong quá trình phân loại: {e}")
 
         # Phân đoạn
         masks = None
         if self.seg_model is not None:
-            print(f"\n🎯 Phân đoạn:")
+            print(f"\nPhân đoạn:")
             try:
-                # ✅ ĐÃ SỬA: Dùng tiền xử lý đúng với chuẩn hóa ImageNet!
+                # Dùng tiền xử lý đúng với chuẩn hóa ImageNet!
                 image_tensor = preprocess_for_segmentation(image_path, target_size=512)
                 image_tensor = image_tensor.unsqueeze(0).to(self.device)
 
@@ -145,10 +140,10 @@ class DRPredictor:
                     masks = torch.sigmoid(output)
 
                     # Thông tin debug
-                    print(f"   Phạm vi logits đầu ra: [{output.min():.3f}, {output.max():.3f}]"))
+                    print(f"   Phạm vi logits đầu ra: [{output.min():.3f}, {output.max():.3f}]")
                     print(f"   Phạm vi xác suất Sigmoid: [{masks.min():.6f}, {masks.max():.6f}]")
 
-                    # ✅ Ngưỡng thích nghi dựa trên thống kê đầu ra
+                    # Ngưỡng thích nghi dựa trên thống kê đầu ra
                     threshold = 0.15  # Bắt đầu với ngưỡng thận trọng
                     masks_binary = (masks > threshold).float()
                     masks = masks_binary[0].cpu().numpy()  # (3, H, W)
@@ -157,7 +152,7 @@ class DRPredictor:
                     lesion_pixels = masks[i].sum()
                     print(f"   {lesion:20s}: {lesion_pixels:.0f} pixels")
             except Exception as e:
-                print(f"   ❌ Error during segmentation: {e}")
+                print(f"Error during segmentation: {e}")
                 import traceback
                 traceback.print_exc()
                 masks = None
@@ -257,7 +252,10 @@ class DRPredictor:
             plt.savefig(default_path, dpi=300, bbox_inches='tight')
             print(f"\n✓ Visualization saved to: {default_path}")
 
-        plt.close()
+        # Hiển thị cửa sổ ảnh
+        plt.show()
+        
+        # plt.close() sẽ được gọi tự động khi đóng cửa sổ
 
 
 def main():
@@ -268,7 +266,7 @@ def main():
 
     # Kiểm tra xem ảnh có tồn tại không
     if not os.path.exists(args.image):
-        print(f"❌ Không tìm thấy ảnh: {args.image}")
+        print(f"Không tìm thấy ảnh: {args.image}")
         return
 
     # Tạo bộ dự đoán
@@ -282,7 +280,7 @@ def main():
     predictor.predict(args.image, args.output)
 
     print(f"\n{'='*80}")
-    print("✅ DỰ ĐOÁN HOÀN THÀNH!")
+    print("DỰ ĐOÁN HOÀN THÀNH!")
     print(f"{'='*80}\n")
 
 

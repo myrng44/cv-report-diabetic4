@@ -1,0 +1,352 @@
+================================================================================
+                   HƯỚNG DẪN SỬ DỤNG MÔ HÌNH PHÁT HIỆN 
+                    BỆNH VÕNG MẠC TIỂU ĐƯỜNG (DR)
+        Sử dụng DenseNet + GRU + Attention & U-Net + CBAM
+================================================================================
+
+* MỤC LỤC:
+    1. Giới thiệu
+    2. Cài đặt môi trường
+    3. Cấu trúc dự án
+    4. Huấn luyện mô hình
+    5. Dự đoán ảnh đơn
+    6. Các công cụ khác
+    7. Tham số quan trọng
+
+================================================================================
+1. GIỚI THIỆU
+================================================================================
+
+Hệ thống phát hiện bệnh võng mạc tiểu đường với 2 tác vụ:
+    
+    * PHÂN LOẠI (Classification):
+       - Mô hình: DenseNet121 + Optimized GRU + Attention
+       - Input: Ảnh đáy mắt 768×768
+       - Output: 5 mức độ DR (No DR → PDR)
+       - Target: >75% accuracy
+    
+    * PHÂN ĐOẠN (Segmentation):
+       - Mô hình: U-Net + CBAM Attention
+       - Input: Ảnh đáy mắt 1024×1024
+       - Output: 3 masks (Microaneurysms, Haemorrhages, Hard Exudates)
+       - Metric: IoU, Dice Score
+
+Dataset: IDRiD (Indian Diabetic Retinopathy Image Dataset)
+    - Training: 413 ảnh (phân loại), 54 ảnh (phân đoạn)
+    - Testing: 103 ảnh (phân loại), 27 ảnh (phân đoạn)
+
+================================================================================
+2. CÀI ĐẶT MÔI TRƯỜNG
+================================================================================
+
+=== YÊU CẦU HỆ THỐNG:
+    - Python 3.8+
+    - CUDA 11.0+ (khuyến nghị cho GPU)
+    - RAM: 16GB+
+    - GPU(Tùy chọn): 16GB VRAM (T4, V100, A100)
+
+=== CÀI ĐẶT THƯ VIỆN:
+
+    # Tạo môi trường ảo (khuyến nghị)
+    conda create -n diabetic_dr python=3.9
+    conda activate diabetic_dr
+
+    # Cài đặt dependencies
+    pip install -r requirements.txt
+
+=== KIỂM TRA CÀI ĐẶT:
+
+    python -c "import torch; print(f'PyTorch: {torch.__version__}')"
+    python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
+
+================================================================================
+3. CẤU TRÚC DỰ ÁN
+================================================================================
+
+Diabetic_CV_rp4/
+│
+├── data/                              # Dữ liệu
+│   ├── A. Segmentation/              # Dữ liệu phân đoạn
+│   │   ├── 1. Original Images/
+│   │   └── 2. All Segmentation Groundtruths/
+│   └── B. Disease Grading/           # Dữ liệu phân loại
+│       ├── 1. Original Images/
+│       └── 2. Groundtruths/
+│
+├── outputs/                           # Kết quả đầu ra
+│   ├── models/                       # Mô hình đã train
+│   │   ├── best_classification_model.pth
+│   │   └── best_seg_model.pth
+│   ├── results/                      # Kết quả dự đoán
+│   └── logs/                         # Training logs
+│
+├── config.py                         # Cấu hình toàn cục
+├── preprocessing.py                  # CLAHE preprocessing
+├── dataset.py                        # Dataset & DataLoader
+│
+├── classification_model.py           # DenseNet + GRU + Attention
+├── advanced_segmentation_model.py    # U-Net + CBAM
+├── sango_optimizer.py                # SANGO optimizer
+│
+├── train_phase1_classification.py    # Huấn luyện phân loại
+├── train_phase2_segmentation_multigpu.py  # Huấn luyện phân đoạn
+│
+├── predict_single_image.py           # Dự đoán 1 ảnh
+├── gradcam_visualization.py          # Grad-CAM visualization
+├── visualize_preprocessing.py        # Visualize CLAHE
+├── visualize_class_samples.py        # Visualize dataset
+└── view_data.py                      # Đọc ảnh
+
+================================================================================
+4. HUẤN LUYỆN MÔ HÌNH
+================================================================================
+
+=== PHASE 1: HUẤN LUYỆN PHÂN LOẠI (Classification)
+
+    python train_phase1_classification.py
+
+    Cấu hình mặc định:
+        - Image size: 768×768
+        - Batch size: 8
+        - Learning rate: 1e-4
+        - Optimizer: AdamW (weight_decay=0.01)
+        - Scheduler: CosineAnnealingWarmRestarts
+        - Epochs: 100
+        - Early stopping: patience=15
+
+    Augmentation:
+        - HorizontalFlip, VerticalFlip, Rotate (±30°)
+        - RandomBrightnessContrast, HueSaturationValue
+        - CLAHE (clip_limit=4.0)
+        - CoarseDropout, GridDistortion
+
+    Output:
+        - Model: outputs/models/best_classification_model.pth
+        - Metrics: outputs/results/classification_test_results.txt
+
+=== PHASE 2: HUẤN LUYỆN PHÂN ĐOẠN (Segmentation)
+
+    python train_phase2_segmentation_multigpu.py
+
+    Cấu hình mặc định:
+        - Image size: 1024×1024
+        - Batch size: 4 (per GPU)
+        - Learning rate: 5e-5
+        - Optimizer: AdamW (weight_decay=0.01)
+        - Scheduler: OneCycleLR
+        - Epochs: 100
+        - Loss: Combined (Focal Tversky + Dice + BCE)
+
+    Augmentation (nhẹ hơn để bảo toàn vị trí):
+        - HorizontalFlip, VerticalFlip, Rotate (±20°)
+        - ElasticTransform (mô phỏng độ cong võng mạc)
+        - RandomBrightnessContrast (nhẹ)
+
+    Output:
+        - Model: outputs/models/best_seg_model.pth
+        - Metrics: Best IoU, Dice score
+
+=== THEO DÕI TRAINING:
+
+    # TensorBoard (nếu có)
+    tensorboard --logdir=outputs/logs
+
+    # Hoặc theo dõi trực tiếp trên terminal
+
+================================================================================
+5. DỰ ĐOÁN ẢNH ĐƠN (INFERENCE)
+================================================================================
+
+=== SỬ DỤNG SCRIPT PREDICT:
+
+    python predict_single_image.py --image "path/to/image.jpg"
+
+    Ví dụ:
+    python predict_single_image.py --image "data/B. Disease Grading/1. Original Images/a. Training Set/IDRiD_01.jpg"
+
+    python predict_single_image.py --image "data/A. Segmentation/1. Original Images/b. Testing Set/IDRiD_68.jpg"
+
+=== OUTPUT:
+
+    Terminal:
+        ============================================================
+        Analyzing: IDRiD_01.jpg
+        ============================================================
+
+        Classification:
+           Prediction: Moderate NPDR
+           Confidence: 72.45%
+
+           All probabilities:
+              No DR               :  5.23%
+              Mild NPDR          : 18.34%
+              Moderate NPDR      : 72.45%
+              Severe NPDR        :  3.12%
+              PDR                :  0.86%
+
+        Phân đoạn:
+           Microaneurysms      : 234 pixels
+           Haemorrhages        : 1567 pixels
+           Hard Exudates       : 456 pixels
+
+    File ảnh:
+        - Lưu tại: outputs/results/prediction_IDRiD_01.png
+        - Hiển thị cửa sổ matplotlib (đóng để tiếp tục)
+
+=== KẾT QUẢ VISUALIZATION GỒM:
+
+    1. Original Retina Image
+    2. Classification Result (bar chart xác suất)
+    3. Microaneurysms Mask (đỏ)
+    4. Haemorrhages Mask (vàng)
+    5. Hard Exudates Mask (xanh)
+    6. All Lesions Combined
+
+================================================================================
+6. CÁC CÔNG CỤ KHÁC
+================================================================================
+
+=== XEM ẢNH NHANH:
+
+    python view_data.py "path/to/image.jpg"
+
+    - Tự động resize để vừa màn hình (1200×800)
+    - Nhấn phím bất kỳ để đóng
+
+=== VISUALIZE CLAHE PREPROCESSING:
+
+    python visualize_preprocessing.py --image "path/to/image.jpg"
+
+    So sánh:
+        - Original
+        - HE (Histogram Equalization)
+        - AHE (clip=40)
+        - CLAHE (clip=2.0)
+        - CLAHE (clip=4.0) // Training
+
+    Output:
+        - outputs/preprocess/<image_name>_clahe_comparison.png
+        - outputs/preprocess/<image_name>_clahe_levels.png
+        - outputs/preprocess/<image_name>_clahe_histograms.png
+
+=== VISUALIZE DATASET SAMPLES:
+
+    python visualize_class_samples.py
+
+    Hiển thị:
+        - Mẫu ảnh từ mỗi grade (0-4)
+        - Original vs Preprocessed
+        - Dataset statistics
+
+    Output:
+        - outputs/class_samples_visualization.png
+        - outputs/class_samples_with_preprocessing.png
+
+=== GRAD-CAM VISUALIZATION (Explainability):
+
+    python run_gradcam.py --image "path/to/image.jpg"
+
+    Hiển thị:
+        - Vùng mà mô hình tập trung (heatmap)
+        - Overlay lên ảnh gốc
+
+    Output:
+        - outputs/results/gradcam_visualizations/
+
+================================================================================
+7. THAM SỐ QUAN TRỌNG (config.py)
+================================================================================
+
+=== KÍCH THƯỚC ẢNH:
+
+    IMG_SIZE = 768              # Classification
+    SEG_IMG_SIZE = 1024         # Segmentation
+
+    Lý do:
+        - 768: Cân bằng accuracy & speed cho phân loại
+        - 1024: Cần độ phân giải cao cho tổn thương nhỏ (microaneurysms)
+
+=== BATCH SIZE:
+
+    BATCH_SIZE = 8              # Classification
+    SEG_BATCH_SIZE = 4          # Segmentation (per GPU)
+
+    Điều chỉnh theo VRAM:
+        - 16GB GPU: 8 / 4 (mặc định)
+        - 24GB GPU: 12 / 6
+        - 8GB GPU: 4 / 2
+
+=== LEARNING RATE:
+
+    LEARNING_RATE = 1e-4        # Classification
+    SEG_LEARNING_RATE = 5e-5    # Segmentation
+
+    Thử nghiệm:
+        - Tăng 2× nếu training chậm
+        - Giảm 2× nếu loss diverge
+
+=== GRU HYPERPARAMETERS:
+
+    GRU_HIDDEN_SIZE = 128       # Hidden units
+    GRU_NUM_LAYERS = 2          # Number of layers
+    GRU_DROPOUT = 0.3           # Dropout rate
+
+    Trade-off:
+        - 64: Nhanh hơn, có thể underfitting
+        - 128: Sweet spot 
+        - 256: Chậm hơn, có thể overfitting
+
+=== CLAHE PARAMETERS:
+
+    CLAHE_CLIP_LIMIT = 4.0      # Training (mạnh)
+    CLAHE_TILE_GRID_SIZE = (8, 8)
+
+    Thử nghiệm:
+        - clip_limit=2.0: Tăng cường nhẹ
+        - clip_limit=4.0: Tăng cường mạnh
+        - clip_limit=6.0: Có thể nhiễu
+
+=== AUGMENTATION PROBABILITY:
+
+    Classification:
+        - HorizontalFlip: p=0.5
+        - Rotate: p=0.6
+        - RandomBrightnessContrast: p=0.7
+        - CoarseDropout: p=0.4
+
+    Segmentation:
+        - HorizontalFlip: p=0.5
+        - Rotate: p=0.5 (±20° thay vì ±30°)
+        - ElasticTransform: p=0.3
+
+================================================================================
+8. WORKFLOW HOÀN CHỈNH
+================================================================================
+
+BƯỚC 1: CÀI ĐẶT
+    conda create -n diabetic_dr python=3.9
+    conda activate diabetic_dr
+    pip install -r requirements.txt
+
+BƯỚC 2: KIỂM TRA DATASET
+    python visualize_class_samples.py
+    python view_data.py "data/B. Disease Grading/1. Original Images/a. Training Set/IDRiD_01.jpg"
+
+BƯỚC 3: TRAINING CLASSIFICATION
+    python train_phase1_classification.py
+    # Chờ ~2-4 giờ (tùy GPU)
+
+BƯỚC 4: TRAINING SEGMENTATION
+    python train_phase2_segmentation_multigpu.py
+    # Chờ ~3-5 giờ (tùy GPU)
+
+BƯỚC 5: PREDICTION
+    python predict_single_image.py --image "path/to/test_image.jpg"
+
+BƯỚC 6: VISUALIZATION & ANALYSIS
+    python run_gradcam.py --image "path/to/image.jpg"
+    python visualize_preprocessing.py --image "path/to/image.jpg"
+
+================================================================================
+THANKS FOR READING!
+================================================================================

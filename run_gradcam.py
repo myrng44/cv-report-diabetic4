@@ -10,7 +10,7 @@ from classification_model import create_classification_model
 
 def main():
     print("\n" + "="*80)
-    print("🔍 TRỰC QUAN HÓA GRAD-CAM CHO PHÂN LOẠI DR")
+    print("TRỰC QUAN HÓA GRAD-CAM CHO PHÂN LOẠI DR")
     print("="*80 + "\n")
 
     # Thiết lập
@@ -82,7 +82,7 @@ def main():
         )
 
     print("\n" + "="*80)
-    print("✅ TRỰC QUAN HÓA GRAD-CAM HOÀN THÀNH!")
+    print("TRỰC QUAN HÓA GRAD-CAM HOÀN THÀNH!")
     print("="*80)
     print("\nKiểm tra kết quả tại:")
     print("  - outputs/results/gradcam_example.png")
