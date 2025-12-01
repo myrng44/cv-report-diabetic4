@@ -4,9 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Update workspace configuration and enhance Grad-CAM visualization script with Vietnamese translations">
+    <list default="true" id="95fe81b8-0e1b-4e7b-b78e-70af177a6101" name="Changes" comment="Implement manual CLAHE enhancement for diabetic retinopathy detection">
       <change afterPath="$PROJECT_DIR$/outputs/models/best_classification_model.pth" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/outputs/models/best_seg_model.pth" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/preprocessing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/visualize_preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualize_preprocessing.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,6 +81,8 @@
       <workItem from="1763539066502" duration="2911000" />
       <workItem from="1763566481195" duration="2925000" />
       <workItem from="1763906267367" duration="226000" />
+      <workItem from="1764078291703" duration="752000" />
+      <workItem from="1764244590271" duration="113000" />
     </task>
     <task id="LOCAL-00001" summary="Add initial implementation of SANGO-based Diabetic Retinopathy Detection System">
       <option name="closed" value="true" />
@@ -303,7 +308,23 @@
       <option name="project" value="LOCAL" />
       <updated>1763906370919</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="Update workspace configuration and enhance Grad-CAM visualization script with Vietnamese translations">
+      <option name="closed" value="true" />
+      <created>1764078358407</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1764078358407</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Implement manual CLAHE enhancement for diabetic retinopathy detection">
+      <option name="closed" value="true" />
+      <created>1764090608416</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1764090608416</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -320,7 +341,8 @@
     <MESSAGE value="Optimize model configuration and training parameters for improved segmentation and classification performance" />
     <MESSAGE value="Enhance data augmentation techniques and introduce new training scripts for optimized classification and segmentation phases" />
     <MESSAGE value="Update workspace configuration and enhance Grad-CAM visualization script with Vietnamese translations" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update workspace configuration and enhance Grad-CAM visualization script with Vietnamese translations" />
+    <MESSAGE value="Implement manual CLAHE enhancement for diabetic retinopathy detection" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implement manual CLAHE enhancement for diabetic retinopathy detection" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Diabetic_CV_rp4$inference.coverage" NAME="inference Coverage Results" MODIFIED="1763534131628" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

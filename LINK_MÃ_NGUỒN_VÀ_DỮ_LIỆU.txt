@@ -1,0 +1,4 @@
+LINK DỰ ÁN ĐÃ CODE (MÃ NGUỒN): https://www.kaggle.com/code/ngvbac/ph-n-lo-i-ph-n-o-n-v-ng-m-c-ti-u-ng-23000094
+
+LINK LẤY DỮ LIỆU: - https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid
+                  - https://www.kaggle.com/datasets/myk1raj/img-mask/data

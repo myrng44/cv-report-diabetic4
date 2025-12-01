@@ -1,6 +1,6 @@
 """
 Module tiền xử lý: CLAHE Enhancement cho phát hiện bệnh lý võng mạc tiểu đường
-Triển khai CLAHE thủ công từ đầu (không dùng cv2.createCLAHE)
+Triển khai CLAHE thủ công
 """
 
 import cv2
